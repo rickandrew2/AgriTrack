@@ -198,4 +198,28 @@ exports.deleteUser = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+};
+
+// Verify token
+exports.verifyToken = async (req, res) => {
+  try {
+    // The auth middleware has already verified the token and set req.user
+    // We just need to return the user info
+    const user = await User.findById(req.user.id).select('-passwordHash');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 }; 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import SideNavigation from './SideNavigation';
 import Dashboard from '../pages/dashboard';
 import Products from '../pages/products';
@@ -9,21 +10,62 @@ import UserManagement from '../pages/usermanagement';
 const Layout = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [userName, setUserName] = useState('User');
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Get user info from localStorage
-  let userRole = null;
-  let userName = 'User';
-  try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    userRole = user?.role?.toLowerCase();
-    if (user?.name) {
-      const nameParts = user.name.trim().split(' ');
-      userName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0];
+  // Get user info from localStorage and validate
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+
+    if (!token || !user) {
+      // No token or user data, redirect to login
+      navigate('/', { replace: true });
+      return;
     }
-  } catch (e) {
-    userRole = null;
-    userName = 'User';
-  }
+
+    try {
+      const userData = JSON.parse(user);
+      setUserRole(userData?.role?.toLowerCase());
+      
+      if (userData?.name) {
+        const nameParts = userData.name.trim().split(' ');
+        setUserName(nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0]);
+      }
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+      // Invalid user data, redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/', { replace: true });
+    }
+  }, [navigate]);
+
+  // Set active tab based on current URL
+  useEffect(() => {
+    const path = location.pathname;
+    switch (path) {
+      case '/dashboard':
+        setActiveTab('dashboard');
+        break;
+      case '/products':
+        setActiveTab('product');
+        break;
+      case '/reports':
+        setActiveTab('report');
+        break;
+      case '/history':
+        setActiveTab('history');
+        break;
+      case '/usermanagement':
+        setActiveTab('usermanagement');
+        break;
+      default:
+        setActiveTab('dashboard');
+    }
+  }, [location.pathname]);
 
   const handleLogoutClick = () => {
     setShowLogoutModal(true);
@@ -35,11 +77,35 @@ const Layout = ({ onLogout }) => {
     if (onLogout) {
       onLogout();
     }
-    window.location.href = '/';
+    navigate('/', { replace: true });
   };
 
   const handleCancelLogout = () => {
     setShowLogoutModal(false);
+  };
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    // Navigate to the corresponding URL
+    switch (tabId) {
+      case 'dashboard':
+        navigate('/dashboard');
+        break;
+      case 'product':
+        navigate('/products');
+        break;
+      case 'report':
+        navigate('/reports');
+        break;
+      case 'history':
+        navigate('/history');
+        break;
+      case 'usermanagement':
+        navigate('/usermanagement');
+        break;
+      default:
+        navigate('/dashboard');
+    }
   };
 
   const renderContent = () => {
@@ -62,7 +128,7 @@ const Layout = ({ onLogout }) => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Side Navigation */}
-      <SideNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <SideNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Main Content */}
       <div className="flex-1 bg-gradient-to-br from-green-50 to-emerald-50 overflow-y-auto">
