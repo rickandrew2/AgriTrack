@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/app.jsx"
+    "dev": "nodemon src/app.jsx",
+    "seed": "node -e \"require('./src/utils/seedData').seedData().then(() => process.exit(0)).catch(() => process.exit(1))\""
   },
   "keywords": [],
   "author": "",

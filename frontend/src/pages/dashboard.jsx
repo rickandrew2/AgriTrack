@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ChartBarIcon, 
   CubeIcon, 
@@ -8,10 +8,14 @@ import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon
 } from '@heroicons/react/24/outline';
+import ChartsSection from '../components/dashboard/ChartsSection';
 
 const Dashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -29,11 +33,65 @@ const Dashboard = ({ onLogout }) => {
     { id: 'history', name: 'HISTORY', icon: ArchiveBoxIcon },
   ];
 
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5000/api/dashboard/stats', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard data');
+        }
+        
+        const data = await response.json();
+        setDashboardStats(data);
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching dashboard stats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+    
+    // Set up real-time updates every 30 seconds
+    const interval = setInterval(fetchDashboardStats, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   const statCards = [
-    { title: 'Total Products', value: '1,234', change: '+12%', color: 'bg-emerald-500' },
-    { title: 'Low Stock', value: '23', change: '-5%', color: 'bg-amber-500' },
-    { title: 'Revenue', value: '$45,678', change: '+8%', color: 'bg-blue-500' },
-    { title: 'Orders', value: '89', change: '+15%', color: 'bg-purple-500' },
+    { 
+      title: 'Total Seeds', 
+      value: dashboardStats?.totalSeeds?.value ? dashboardStats.totalSeeds.value.toLocaleString() : '0', 
+      change: dashboardStats?.totalSeeds?.change || '+0%', 
+      color: 'bg-emerald-500' 
+    },
+    { 
+      title: 'Total Seedlings', 
+      value: dashboardStats?.totalSeedlings?.value ? dashboardStats.totalSeedlings.value.toLocaleString() : '0', 
+      change: dashboardStats?.totalSeedlings?.change || '+0%', 
+      color: 'bg-amber-500' 
+    },
+    { 
+      title: 'Total Dispatch Items', 
+      value: dashboardStats?.totalDispatchItems?.value ? dashboardStats.totalDispatchItems.value.toLocaleString() : '0', 
+      change: dashboardStats?.totalDispatchItems?.change || '+0%', 
+      color: 'bg-blue-500' 
+    },
+    { 
+      title: 'Remaining Stock', 
+      value: dashboardStats?.remainingStock?.value ? dashboardStats.remainingStock.value.toLocaleString() : '0', 
+      change: dashboardStats?.remainingStock?.change || '+0%', 
+      color: 'bg-purple-500' 
+    },
   ];
 
   return (
@@ -95,80 +153,126 @@ const Dashboard = ({ onLogout }) => {
           {/* Overview Section */}
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-green-800 mb-4">Overview</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {statCards.map((card, index) => (
-                <div
-                  key={index}
-                  className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50 hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-12 h-12 ${card.color} rounded-xl shadow-lg flex items-center justify-center`}>
-                      <div className="w-6 h-6 bg-white rounded-md"></div>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((index) => (
+                  <div
+                    key={index}
+                    className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50 animate-pulse"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-gray-300 rounded-xl shadow-lg"></div>
+                      <div className="w-16 h-6 bg-gray-300 rounded-full"></div>
                     </div>
-                    <span className="text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                      {card.change}
-                    </span>
+                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                    <div className="h-8 bg-gray-300 rounded"></div>
                   </div>
-                  <h4 className="text-gray-600 text-sm font-medium mb-1">{card.title}</h4>
-                  <p className="text-2xl font-bold text-gray-800">{card.value}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
+                <p className="text-red-600 font-medium">Error loading dashboard data: {error}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {statCards.map((card, index) => (
+                  <div
+                    key={index}
+                    className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50 hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`w-12 h-12 ${card.color} rounded-xl shadow-lg flex items-center justify-center`}>
+                        <div className="w-6 h-6 bg-white rounded-md"></div>
+                      </div>
+                      <span className="text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                        {card.change}
+                      </span>
+                    </div>
+                    <h4 className="text-gray-600 text-sm font-medium mb-1">{card.title}</h4>
+                    <p className="text-2xl font-bold text-gray-800">{card.value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Search and Actions */}
-          <div className="flex flex-col lg:flex-row gap-4 mb-8">
-            <div className="flex-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search inventory..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-white/80 backdrop-blur-md border border-white/50 rounded-2xl shadow-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <button className="flex items-center px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 font-medium">
-                <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
-                EXPORT TO EXCEL
-              </button>
-              <button className="flex items-center px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 font-medium">
-                <ArrowUpTrayIcon className="w-5 h-5 mr-2" />
-                IMPORT TO EXCEL
-              </button>
-            </div>
-          </div>
-
-          {/* Chart Section */}
-          <div className="mb-8">
-            <div className="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/50">
-              <h3 className="text-xl font-semibold text-green-800 mb-4">CHART</h3>
-              <div className="h-64 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl border-2 border-dashed border-green-300 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center mb-4">
-                    <ChartBarIcon className="w-8 h-8 text-green-600" />
-                  </div>
-                  <p className="text-green-600 font-medium">Chart visualization will appear here</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Charts Section */}
+          <ChartsSection 
+            dashboardStats={dashboardStats} 
+            loading={loading} 
+            error={error} 
+          />
 
           {/* Data Table Section */}
           <div className="bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-white/50">
             <h3 className="text-xl font-semibold text-green-800 mb-4">Recent Transactions</h3>
-            <div className="h-96 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-                  <DocumentChartBarIcon className="w-8 h-8 text-gray-600" />
+            {loading ? (
+              <div className="h-96 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4 animate-spin">
+                    <DocumentChartBarIcon className="w-8 h-8 text-gray-600" />
+                  </div>
+                  <p className="text-gray-600 font-medium">Loading transactions...</p>
                 </div>
-                <p className="text-gray-600 font-medium">Data table will appear here</p>
               </div>
-            </div>
+            ) : error ? (
+              <div className="h-96 bg-gradient-to-br from-red-50 to-red-100 rounded-xl border-2 border-dashed border-red-300 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-red-200 rounded-full flex items-center justify-center mb-4">
+                    <DocumentChartBarIcon className="w-8 h-8 text-red-600" />
+                  </div>
+                  <p className="text-red-600 font-medium">Error loading data: {error}</p>
+                </div>
+              </div>
+            ) : dashboardStats?.recentTransactions?.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Product</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Quantity</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">User</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboardStats.recentTransactions.map((transaction, index) => (
+                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4 text-gray-800">
+                          {transaction.productId?.name || 'Unknown Product'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            transaction.type === 'dispatch' ? 'bg-red-100 text-red-800' :
+                            transaction.type === 'add' ? 'bg-green-100 text-green-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {transaction.type.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-gray-800">{transaction.quantity}</td>
+                        <td className="py-3 px-4 text-gray-600">
+                          {transaction.userId?.name || 'Unknown User'}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600">
+                          {new Date(transaction.timestamp).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="h-96 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                    <DocumentChartBarIcon className="w-8 h-8 text-gray-600" />
+                  </div>
+                  <p className="text-gray-600 font-medium">No transactions found</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
