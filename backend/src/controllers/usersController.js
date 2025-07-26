@@ -26,13 +26,22 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    console.log('Existing user check:', existingUser ? 'User found' : 'No user found');
+    // Check if user already exists by email
+    const existingUserByEmail = await User.findOne({ email });
+    console.log('Existing user check by email:', existingUserByEmail ? 'User found' : 'No user found');
     
-    if (existingUser) {
+    if (existingUserByEmail) {
       console.log('User already exists with email:', email);
       return res.status(400).json({ error: 'User already exists with this email' });
+    }
+
+    // Check if user already exists by name
+    const existingUserByName = await User.findOne({ name: fullName });
+    console.log('Existing user check by name:', existingUserByName ? 'User found' : 'No user found');
+    
+    if (existingUserByName) {
+      console.log('User already exists with name:', fullName);
+      return res.status(400).json({ error: 'User already exists with this name' });
     }
 
     // Hash password
@@ -127,9 +136,15 @@ exports.updateUser = async (req, res) => {
     }
 
     // Check if email is already taken by another user
-    const existingUser = await User.findOne({ email, _id: { $ne: id } });
-    if (existingUser) {
+    const existingUserByEmail = await User.findOne({ email, _id: { $ne: id } });
+    if (existingUserByEmail) {
       return res.status(400).json({ error: 'Email is already taken by another user' });
+    }
+
+    // Check if name is already taken by another user
+    const existingUserByName = await User.findOne({ name, _id: { $ne: id } });
+    if (existingUserByName) {
+      return res.status(400).json({ error: 'Name is already taken by another user' });
     }
 
     // Update user

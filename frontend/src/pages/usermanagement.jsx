@@ -12,6 +12,7 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
 
   // Fetch users from backend
   useEffect(() => {
@@ -41,12 +42,16 @@ const UserManagement = () => {
   const handleAdd = () => {
     setEditingUser(null);
     setForm({ name: '', email: '', role: 'Staff', password: '' });
+    setValidationErrors({});
+    setError('');
     setShowModal(true);
   };
 
   const handleEdit = (user) => {
     setEditingUser(user);
     setForm({ name: user.name, email: user.email, role: user.role, password: '' });
+    setValidationErrors({});
+    setError('');
     setShowModal(true);
   };
 
@@ -70,7 +75,10 @@ const UserManagement = () => {
           'Content-Type': 'application/json',
         },
       });
-      if (!response.ok) throw new Error('Failed to delete user');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete user');
+      }
       setUsers(users.filter((u) => u._id !== userToDelete._id));
       setSuccess('User deleted successfully!');
       setTimeout(() => setSuccess(''), 3000);
@@ -88,30 +96,125 @@ const UserManagement = () => {
     setUserToDelete(null);
   };
 
+  const validateField = (field, value) => {
+    const errors = {};
+    
+    if (field === 'name') {
+      if (!value.trim()) {
+        errors.name = 'Name is required';
+      } else if (value.trim().length < 2) {
+        errors.name = 'Name must be at least 2 characters long';
+      }
+    }
+    
+    if (field === 'email') {
+      if (!value.trim()) {
+        errors.email = 'Email is required';
+      } else {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+          errors.email = 'Please enter a valid email address';
+        }
+      }
+    }
+    
+    if (field === 'password' && !editingUser) {
+      if (!value.trim()) {
+        errors.password = 'Password is required';
+      } else if (value.length < 6) {
+        errors.password = 'Password must be at least 6 characters long';
+      }
+    }
+    
+    return errors;
+  };
+
+  const handleFormChange = (field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    
+    // Clear validation errors when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+    }
+    
+    // Clear general error when user makes changes
+    if (error) setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Frontend validation
+    if (!form.name.trim()) {
+      setError('Name is required');
+      return;
+    }
+    if (!form.email.trim()) {
+      setError('Email is required');
+      return;
+    }
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    if (!editingUser && !form.password.trim()) {
+      setError('Password is required for new users');
+      return;
+    }
+    if (!editingUser && form.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+    
+    // Check if email already exists (for new users or when email is changed)
+    if (!editingUser || (editingUser && editingUser.email !== form.email)) {
+      const existingUser = users.find(user => user.email.toLowerCase() === form.email.toLowerCase());
+      if (existingUser) {
+        setError('A user with this email already exists');
+        return;
+      }
+    }
+    
+    // Check if name already exists (for new users or when name is changed)
+    if (!editingUser || (editingUser && editingUser.name !== form.name)) {
+      const existingUser = users.find(user => user.name.toLowerCase() === form.name.toLowerCase());
+      if (existingUser) {
+        setError('A user with this name already exists');
+        return;
+      }
+    }
+    
     setLoading(true);
     setError('');
     try {
       const token = localStorage.getItem('token');
       let response, data;
       if (editingUser) {
-        // You need to implement PUT endpoint in backend for this to work
-        response = await fetch(`${API_URL}/${editingUser._id}`, {
+        // Update existing user
+        response = await fetch(buildApiUrl(`/users/${editingUser._id}`), {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(form),
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email,
+            role: form.role.toLowerCase(),
+          }),
         });
-        if (!response.ok) throw new Error('Failed to update user');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update user');
+        }
         data = await response.json();
         setUsers(users.map((u) => (u._id === editingUser._id ? data.user : u)));
         setSuccess('User updated successfully!');
         setTimeout(() => setSuccess(''), 3000);
       } else {
-        response = await fetch(`${API_URL}/register`, {
+        response = await fetch(buildApiUrl('/users/register'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -124,7 +227,10 @@ const UserManagement = () => {
             password: form.password,
           }),
         });
-        if (!response.ok) throw new Error('Failed to add user');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to add user');
+        }
         data = await response.json();
         setUsers([...users, data.user]);
         setSuccess('User added successfully!');
@@ -224,30 +330,48 @@ const UserManagement = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
                 <input
                   type="text"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white ${
+                    validationErrors.name ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
+                  }`}
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  onChange={(e) => handleFormChange('name', e.target.value)}
+                  onBlur={(e) => {
+                    const errors = validateField('name', e.target.value);
+                    setValidationErrors(prev => ({ ...prev, ...errors }));
+                  }}
                   placeholder="Enter full name"
                   required
                 />
+                {validationErrors.name && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
                 <input
                   type="email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white ${
+                    validationErrors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
+                  }`}
                   value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  onChange={(e) => handleFormChange('email', e.target.value)}
+                  onBlur={(e) => {
+                    const errors = validateField('email', e.target.value);
+                    setValidationErrors(prev => ({ ...prev, ...errors }));
+                  }}
                   placeholder="Enter email address"
                   required
                 />
+                {validationErrors.email && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
                 <select
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
                   value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
+                  onChange={(e) => handleFormChange('role', e.target.value)}
                 >
                   <option value="Admin">Admin</option>
                   <option value="Staff">Staff</option>
@@ -258,19 +382,32 @@ const UserManagement = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
                   <input
                     type="password"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white ${
+                      validationErrors.password ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
+                    }`}
                     value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    onChange={(e) => handleFormChange('password', e.target.value)}
+                    onBlur={(e) => {
+                      const errors = validateField('password', e.target.value);
+                      setValidationErrors(prev => ({ ...prev, ...errors }));
+                    }}
                     placeholder="Enter password"
                     required
                   />
+                  {validationErrors.password && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.password}</p>
+                  )}
                 </div>
               )}
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   type="button"
                   className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setValidationErrors({});
+                    setError('');
+                  }}
                 >
                   Cancel
                 </button>

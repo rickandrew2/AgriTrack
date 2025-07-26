@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ClockIcon, MagnifyingGlassIcon, FunnelIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { buildApiUrl } from '../config/api';
 
 const History = () => {
@@ -12,7 +12,7 @@ const History = () => {
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: 50
+    itemsPerPage: 10
   });
 
   useEffect(() => {
@@ -77,9 +77,6 @@ const History = () => {
       case 'generate_inventory_report':
       case 'generate_transaction_report':
         return 'bg-purple-100 text-purple-800';
-      case 'create_backup':
-      case 'restore_backup':
-        return 'bg-indigo-100 text-indigo-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -94,10 +91,35 @@ const History = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-green-800">HISTORY</h1>
-        <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200">
-          <ArrowDownTrayIcon className="w-5 h-5" />
-          <span>Export History</span>
-        </button>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50">
+          <h3 className="text-lg font-semibold text-green-800 mb-2">Total Activities</h3>
+          <p className="text-3xl font-bold text-gray-800">{pagination.totalItems}</p>
+        </div>
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50">
+          <h3 className="text-lg font-semibold text-green-800 mb-2">This Month</h3>
+          <p className="text-3xl font-bold text-gray-800">
+            {activityLogs.filter(log => {
+              const logDate = new Date(log.timestamp);
+              const now = new Date();
+              return logDate.getMonth() === now.getMonth() && 
+                     logDate.getFullYear() === now.getFullYear();
+            }).length}
+          </p>
+        </div>
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50">
+          <h3 className="text-lg font-semibold text-green-800 mb-2">Today</h3>
+          <p className="text-3xl font-bold text-gray-800">
+            {activityLogs.filter(log => {
+              const logDate = new Date(log.timestamp);
+              const today = new Date();
+              return logDate.toDateString() === today.toDateString();
+            }).length}
+          </p>
+        </div>
       </div>
 
       {/* Search and Filter */}
@@ -126,8 +148,6 @@ const History = () => {
             <option value="dispatch_product">Dispatch Product</option>
             <option value="adjust_product">Adjust Product</option>
             <option value="generate_inventory_report">Generate Report</option>
-            <option value="create_backup">Create Backup</option>
-            <option value="restore_backup">Restore Backup</option>
           </select>
         </div>
       </div>
@@ -225,35 +245,6 @@ const History = () => {
           </button>
         </div>
       )}
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50">
-          <h3 className="text-lg font-semibold text-green-800 mb-2">Total Activities</h3>
-          <p className="text-3xl font-bold text-gray-800">{pagination.totalItems}</p>
-        </div>
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50">
-          <h3 className="text-lg font-semibold text-green-800 mb-2">This Month</h3>
-          <p className="text-3xl font-bold text-gray-800">
-            {activityLogs.filter(log => {
-              const logDate = new Date(log.timestamp);
-              const now = new Date();
-              return logDate.getMonth() === now.getMonth() && 
-                     logDate.getFullYear() === now.getFullYear();
-            }).length}
-          </p>
-        </div>
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50">
-          <h3 className="text-lg font-semibold text-green-800 mb-2">Today</h3>
-          <p className="text-3xl font-bold text-gray-800">
-            {activityLogs.filter(log => {
-              const logDate = new Date(log.timestamp);
-              const today = new Date();
-              return logDate.toDateString() === today.toDateString();
-            }).length}
-          </p>
-        </div>
-      </div>
     </div>
   );
 };
