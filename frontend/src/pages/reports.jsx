@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DocumentChartBarIcon, ArrowDownTrayIcon, CalendarIcon, ChartBarIcon, CurrencyDollarIcon, CogIcon, ShieldCheckIcon, ChevronLeftIcon, ChevronRightIcon, FunnelIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { buildApiUrl } from '../config/api';
 
 const Reports = () => {
   const [reports, setReports] = useState([]);
@@ -75,7 +76,7 @@ const Reports = () => {
 
   const fetchFilterOptions = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/reports/filter-options', {
+      const response = await fetch(buildApiUrl('/reports/filter-options'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -92,7 +93,7 @@ const Reports = () => {
   const fetchRecentReports = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/reports/recent', {
+      const response = await fetch(buildApiUrl('/reports/recent'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -130,7 +131,7 @@ const Reports = () => {
         if (filters.productId) queryParams.append('productId', filters.productId);
       }
 
-      const response = await fetch(`http://localhost:5000/api/reports/${selectedReport}?${queryParams}`, {
+      const response = await fetch(buildApiUrl(`/reports/${selectedReport}?${queryParams}`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

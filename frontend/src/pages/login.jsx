@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { buildApiUrl } from '../config/api';
 
 const Login = ({ onLoginSuccess }) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -149,7 +150,7 @@ const Login = ({ onLoginSuccess }) => {
       console.log('Sending request to:', endpoint);
       console.log('Request data:', requestData);
 
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const response = await fetch(buildApiUrl(endpoint), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

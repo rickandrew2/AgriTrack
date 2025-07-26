@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DocumentChartBarIcon, BeakerIcon, CubeIcon, TruckIcon, ArchiveBoxIcon, StarIcon, PlusIcon } from '@heroicons/react/24/outline';
 import ChartsSection from '../components/dashboard/ChartsSection';
+import { buildApiUrl } from '../config/api';
 
 const Dashboard = () => {
   const [dashboardStats, setDashboardStats] = useState(null);
@@ -27,7 +28,7 @@ const Dashboard = () => {
     const fetchDashboardStats = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5000/api/dashboard/stats', {
+        const response = await fetch(buildApiUrl('/dashboard/stats'), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

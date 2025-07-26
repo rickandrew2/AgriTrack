@@ -33,7 +33,7 @@ const History = () => {
         params.append('action', filterAction);
       }
       
-      const response = await fetch(`http://localhost:5000/api/activity-logs?${params}`, {
+      const response = await fetch(buildApiUrl(`/activity-logs?${params}`), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

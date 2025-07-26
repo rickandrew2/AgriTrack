@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, ChevronDownIcon, PlusIcon, XMarkIcon, CheckCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { buildApiUrl } from '../config/api';
 
 const CATEGORY_COLORS = {
   Rice: 'bg-green-100 text-green-800',
@@ -62,7 +63,7 @@ const Products = () => {
     const fetchProducts = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5000/api/products', {
+        const response = await fetch(buildApiUrl('/products'), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -185,7 +186,7 @@ const Products = () => {
     setDispatchLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/transactions', {
+              const response = await fetch(buildApiUrl('/transactions'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -204,7 +205,7 @@ const Products = () => {
       }
 
       // Refresh products to get updated quantities
-      const productsResponse = await fetch('http://localhost:5000/api/products', {
+      const productsResponse = await fetch(buildApiUrl('/products'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -287,7 +288,7 @@ const Products = () => {
         formData.append('image', selectedImage);
       }
       
-      const response = await fetch('http://localhost:5000/api/products', {
+      const response = await fetch(buildApiUrl('/products'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -349,7 +350,7 @@ const Products = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const url = `http://localhost:5000/api/products/${editingProduct._id}`;
+      const url = buildApiUrl(`/products/${editingProduct._id}`);
       
       console.log('Sending edit request to:', url);
       console.log('Product ID:', editingProduct._id);
@@ -394,7 +395,7 @@ const Products = () => {
       }
 
       // Refresh products
-      const productsResponse = await fetch('http://localhost:5000/api/products', {
+      const productsResponse = await fetch(buildApiUrl('/products'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -437,7 +438,7 @@ const Products = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const url = `http://localhost:5000/api/products/${editingProduct._id}`;
+      const url = buildApiUrl(`/products/${editingProduct._id}`);
       
       console.log('Sending delete request to:', url);
       console.log('Product ID:', editingProduct._id);
@@ -501,7 +502,7 @@ const Products = () => {
       const token = localStorage.getItem('token');
       const formData = new FormData();
       formData.append('file', importFile);
-      const response = await fetch('http://localhost:5000/api/products/import', {
+      const response = await fetch(buildApiUrl('/products/import'), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -510,7 +511,7 @@ const Products = () => {
       if (!response.ok) throw new Error(result.error || 'Import failed');
       setImportResult(result);
       // Refresh products
-      const productsResponse = await fetch('http://localhost:5000/api/products', {
+      const productsResponse = await fetch(buildApiUrl('/products'), {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       if (productsResponse.ok) {
@@ -529,7 +530,7 @@ const Products = () => {
     setShowExportDropdown(false);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/products/export?format=${format}`, {
+      const response = await fetch(buildApiUrl(`/products/export?format=${format}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Export failed');

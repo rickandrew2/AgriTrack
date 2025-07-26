@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PencilIcon, TrashIcon, EyeIcon, UserPlusIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-
-const API_URL = 'http://localhost:5000/api/users';
+import { buildApiUrl } from '../config/api';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -21,7 +20,7 @@ const UserManagement = () => {
       setError('');
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(API_URL, {
+        const response = await fetch(buildApiUrl('/users'), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -64,7 +63,7 @@ const UserManagement = () => {
     try {
       // You need to implement DELETE endpoint in backend for this to work
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/${userToDelete._id}`, {
+      const response = await fetch(buildApiUrl(`/users/${userToDelete._id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
