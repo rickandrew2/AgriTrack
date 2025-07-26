@@ -142,13 +142,13 @@ const Login = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      const endpoint = isLoginMode ? '/auth/login' : '/auth/register';
+      const endpoint = isLoginMode ? '/users/login' : '/users/register';
       const requestData = isLoginMode 
         ? { email: formData.email, password: formData.password }
         : { fullName: formData.fullName, email: formData.email, password: formData.password };
 
       console.log('Sending request to:', endpoint);
-      console.log('Request data:', requestData);
+      // Removed sensitive data logging for security
 
       const response = await fetch(buildApiUrl(endpoint), {
         method: 'POST',
