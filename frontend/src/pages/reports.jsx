@@ -70,7 +70,7 @@ const Reports = () => {
 
   useEffect(() => {
     fetchFilterOptions();
-    loadMockReports();
+    fetchRecentReports();
   }, []);
 
   const fetchFilterOptions = async () => {
@@ -89,23 +89,26 @@ const Reports = () => {
     }
   };
 
-  const loadMockReports = () => {
-    setReports([
-      { id: 1, name: 'Monthly Inventory Report', date: '2024-01-15', type: 'inventory', status: 'completed', size: '2.3 MB' },
-      { id: 2, name: 'Weekly Transaction Summary', date: '2024-01-14', type: 'transactions', status: 'completed', size: '1.8 MB' },
-      { id: 3, name: 'Performance Analytics', date: '2024-01-13', type: 'performance', status: 'pending', size: '3.1 MB' },
-      { id: 4, name: 'System Audit Log', date: '2024-01-12', type: 'audit', status: 'completed', size: '4.2 MB' },
-      { id: 5, name: 'Quarterly Sales Report', date: '2024-01-10', type: 'transactions', status: 'completed', size: '5.7 MB' },
-      { id: 6, name: 'Storage Utilization Report', date: '2024-01-08', type: 'inventory', status: 'completed', size: '1.5 MB' },
-      { id: 7, name: 'Annual Performance Review', date: '2023-12-28', type: 'performance', status: 'completed', size: '8.9 MB' },
-      { id: 8, name: 'December Transaction Log', date: '2023-12-25', type: 'transactions', status: 'completed', size: '4.1 MB' },
-      { id: 9, name: 'Year-End Inventory Count', date: '2023-12-20', type: 'inventory', status: 'completed', size: '6.2 MB' },
-      { id: 10, name: 'System Security Audit', date: '2023-12-15', type: 'audit', status: 'completed', size: '3.8 MB' },
-      { id: 11, name: 'November Analytics Report', date: '2023-11-30', type: 'performance', status: 'completed', size: '7.3 MB' },
-      { id: 12, name: 'Monthly Revenue Summary', date: '2023-11-25', type: 'transactions', status: 'completed', size: '2.9 MB' },
-      { id: 13, name: 'Processing Report', date: '2024-01-16', type: 'performance', status: 'processing', size: '1.2 MB' },
-      { id: 14, name: 'Pending Inventory Check', date: '2024-01-17', type: 'inventory', status: 'pending', size: '0.8 MB' },
-    ]);
+  const fetchRecentReports = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/reports/recent', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setReports(data);
+      } else {
+        setReports([]);
+      }
+    } catch (error) {
+      setReports([]);
+      console.error('Error fetching recent reports:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const generateReport = async () => {
@@ -172,14 +175,15 @@ const Reports = () => {
 
   // Filter reports based on search term, status, and date period
   const filteredReports = reports.filter(report => {
-    const matchesSearch = report.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
-    
+    // Use summary or type for search
+    const name = report.summary || report.type || '';
+    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase());
+    // No status field in backend, so always true
+    const matchesStatus = true;
     // Date filtering logic
-    const reportDate = new Date(report.date);
+    const reportDate = new Date(report.generatedAt);
     const now = new Date();
     const daysDiff = Math.floor((now - reportDate) / (1000 * 60 * 60 * 24));
-    
     let matchesDate = true;
     switch (filterPeriod) {
       case '1week':
@@ -197,7 +201,6 @@ const Reports = () => {
       default:
         matchesDate = true;
     }
-    
     return matchesSearch && matchesStatus && matchesDate;
   });
 
@@ -1206,9 +1209,8 @@ const Reports = () => {
                   <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 </div>
               </div>
-
-              {/* Status Filter */}
-              <div className="sm:w-48">
+              {/* Status Filter (hidden, no backend status) */}
+              <div className="sm:w-48 hidden">
                 <select
                   value={statusFilter}
                   onChange={(e) => handleStatusFilterChange(e.target.value)}
@@ -1222,7 +1224,6 @@ const Reports = () => {
                 </select>
               </div>
             </div>
-
             {/* Date Period Filters */}
             <div className="flex flex-wrap gap-2">
               {periodFilterOptions.map(option => (
@@ -1271,7 +1272,7 @@ const Reports = () => {
               <div className="space-y-4">
                 {currentReports.map((report) => (
                   <div
-                    key={report.id}
+                    key={report._id}
                     className="group flex items-center justify-between p-6 border border-gray-200 rounded-2xl hover:bg-gradient-to-r hover:from-green-50 hover:to-white transition-all duration-300 hover:shadow-lg hover:border-green-200"
                   >
                     <div className="flex items-center space-x-6">
@@ -1279,21 +1280,25 @@ const Reports = () => {
                         <DocumentChartBarIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-800 text-lg mb-1">{report.name}</h4>
+                        <h4 className="font-semibold text-gray-800 text-lg mb-1">
+                          {report.type === 'inventory' ? 'Inventory Report' : report.type === 'transaction' ? 'Transaction Report' : 'Report'}
+                          {' - '}{new Date(report.generatedAt).toLocaleDateString()}
+                        </h4>
                         <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <span>Generated on {report.date}</span>
-                          <span>•</span>
-                          <span>{report.size}</span>
+                          <span>{report.summary}</span>
+                          {report.generatedBy && report.generatedBy.name && (
+                            <>
+                              <span>•</span>
+                              <span>By {report.generatedBy.name}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
-                      <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(report.status)}`}>
-                        {report.status}
+                      <span className="px-4 py-2 rounded-full text-sm font-medium border bg-green-100 text-green-800 border-green-200">
+                        {report.type === 'inventory' ? 'Inventory' : report.type === 'transaction' ? 'Transaction' : 'Other'}
                       </span>
-                      <button className="text-green-600 hover:text-green-800 p-2 rounded-lg hover:bg-green-100 transition-colors duration-200">
-                        <ArrowDownTrayIcon className="w-5 h-5" />
-                      </button>
                     </div>
                   </div>
                 ))}

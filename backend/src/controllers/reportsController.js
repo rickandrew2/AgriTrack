@@ -1,6 +1,7 @@
 const Product = require('../models/products');
 const Transaction = require('../models/transactions');
 const User = require('../models/users');
+const Report = require('../models/reports');
 const { logReportActivity } = require('../utils/logActivity');
 
 // Generate Inventory Report
@@ -92,6 +93,15 @@ exports.generateInventoryReport = async (req, res) => {
         storageAreas
       }
     };
+
+    // Save to reports collection
+    await Report.create({
+      type: 'inventory',
+      generatedAt: report.generatedAt,
+      generatedBy: req.user?.id,
+      filters: report.filters,
+      summary: `Total Products: ${report.summary.totalProducts}, Total Quantity: ${report.summary.totalQuantity}, Low Stock: ${report.summary.lowStockCount}, Out of Stock: ${report.summary.outOfStockCount}`
+    });
 
     // Log the activity
     await logReportActivity(
@@ -279,13 +289,22 @@ exports.generateTransactionReport = async (req, res) => {
       dailyStats: Object.values(dailyStats).sort((a, b) => new Date(b.date) - new Date(a.date)),
       userStats: Object.values(userStats),
       productStats: Object.values(productStats),
-      allTransactions: transactions,
+      allTransactions: validTransactions,
       filterOptions: {
         types: ['dispatch', 'add', 'update'],
         users,
         products
       }
     };
+
+    // Save to reports collection
+    await Report.create({
+      type: 'transaction',
+      generatedAt: report.generatedAt,
+      generatedBy: req.user?.id,
+      filters: report.filters,
+      summary: `Total Transactions: ${report.summary.totalTransactions}, Dispatch: ${report.summary.dispatchCount}, Add: ${report.summary.addCount}, Update: ${report.summary.updateCount}`
+    });
 
     res.json(report);
   } catch (err) {
@@ -311,6 +330,19 @@ exports.getReportFilterOptions = async (req, res) => {
     });
   } catch (err) {
     console.error('Error getting filter options:', err);
+    res.status(500).json({ error: err.message });
+  }
+}; 
+
+// Fetch recent reports
+exports.getRecentReports = async (req, res) => {
+  try {
+    const reports = await Report.find({})
+      .sort({ generatedAt: -1 })
+      .limit(10)
+      .populate('generatedBy', 'name email');
+    res.json(reports);
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }; 

@@ -15,4 +15,7 @@ router.get('/transactions', reportsController.generateTransactionReport);
 // Get filter options for reports
 router.get('/filter-options', reportsController.getReportFilterOptions);
 
+// Fetch recent reports
+router.get('/recent', reportsController.getRecentReports);
+
 module.exports = router; 
