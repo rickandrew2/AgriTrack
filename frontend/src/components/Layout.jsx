@@ -4,6 +4,7 @@ import Dashboard from '../pages/dashboard';
 import Products from '../pages/products';
 import Reports from '../pages/reports';
 import History from '../pages/history';
+import Backup from '../pages/backup';
 
 const Layout = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -27,6 +28,8 @@ const Layout = ({ onLogout }) => {
         return <Reports />;
       case 'history':
         return <History />;
+      case 'backup':
+        return <Backup />;
       default:
         return <Dashboard />;
     }

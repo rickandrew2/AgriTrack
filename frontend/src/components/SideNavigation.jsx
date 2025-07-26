@@ -3,7 +3,8 @@ import {
   ChartBarIcon, 
   CubeIcon, 
   DocumentChartBarIcon, 
-  ArchiveBoxIcon
+  ArchiveBoxIcon,
+  CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 
 const SideNavigation = ({ activeTab, onTabChange }) => {
@@ -12,6 +13,7 @@ const SideNavigation = ({ activeTab, onTabChange }) => {
     { id: 'product', name: 'PRODUCT', icon: CubeIcon },
     { id: 'report', name: 'REPORT', icon: DocumentChartBarIcon },
     { id: 'history', name: 'HISTORY', icon: ArchiveBoxIcon },
+    { id: 'backup', name: 'BACKUP', icon: CloudArrowUpIcon },
   ];
 
   return (

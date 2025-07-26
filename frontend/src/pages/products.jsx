@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { PlusIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
+const CATEGORY_COLORS = {
+  Seeds: 'bg-green-100 text-green-800',
+  Seedlings: 'bg-orange-100 text-orange-800',
+  Fertilizers: 'bg-blue-100 text-blue-800',
+  Tools: 'bg-purple-100 text-purple-800',
+  Grains: 'bg-yellow-100 text-yellow-800',
+  Other: 'bg-gray-100 text-gray-800',
+};
+
+const DEFAULT_IMAGE = 'https://via.placeholder.com/40x40?text=No+Image';
+
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +89,7 @@ const Products = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Image</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700">Product Name</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700">Category</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700">Stock</th>
@@ -89,17 +101,28 @@ const Products = () => {
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((product, index) => (
                     <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <img
+                          src={product.imageUrl || DEFAULT_IMAGE}
+                          alt={product.name}
+                          className="w-10 h-10 object-cover rounded-lg border border-gray-200 bg-white"
+                        />
+                      </td>
                       <td className="py-3 px-4 text-gray-800 font-medium">{product.name}</td>
-                      <td className="py-3 px-4 text-gray-600">{product.category}</td>
-                      <td className="py-3 px-4 text-gray-800">{product.stock || 0}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${CATEGORY_COLORS[product.category] || CATEGORY_COLORS.Other}`}>
+                          {product.category}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-gray-800">{product.quantity || 0}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          (product.stock || 0) > 10 ? 'bg-green-100 text-green-800' :
-                          (product.stock || 0) > 0 ? 'bg-yellow-100 text-yellow-800' :
+                          (product.quantity || 0) > 10 ? 'bg-green-100 text-green-800' :
+                          (product.quantity || 0) > 0 ? 'bg-yellow-100 text-yellow-800' :
                           'bg-red-100 text-red-800'
                         }`}>
-                          {(product.stock || 0) > 10 ? 'In Stock' :
-                           (product.stock || 0) > 0 ? 'Low Stock' : 'Out of Stock'}
+                          {(product.quantity || 0) > 10 ? 'In Stock' :
+                            (product.quantity || 0) > 0 ? 'Low Stock' : 'Out of Stock'}
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -116,7 +139,7 @@ const Products = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="py-8 text-center text-gray-500">
+                    <td colSpan="6" className="py-8 text-center text-gray-500">
                       No products found
                     </td>
                   </tr>
