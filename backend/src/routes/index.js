@@ -8,6 +8,7 @@ const userRoutes = require('./users');
 const barangayRoutes = require('./barangays');
 const transactionRoutes = require('./transactions');
 const dashboardRoutes = require('./dashboard');
+const reportRoutes = require('./reports');
 
 router.get('/', (req, res) => {
   res.send('API Root');
@@ -20,5 +21,6 @@ router.use('/users', userRoutes);
 router.use('/barangays', barangayRoutes);
 router.use('/transactions', transactionRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/reports', reportRoutes);
 
 module.exports = router;

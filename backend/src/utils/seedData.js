@@ -4,6 +4,7 @@ const Transaction = require('../models/transactions');
 const User = require('../models/users');
 const Category = require('../models/categories');
 const StorageArea = require('../models/storageArea');
+const bcrypt = require('bcryptjs');
 
 // Load environment variables
 require('dotenv').config();
@@ -30,11 +31,15 @@ const seedData = async () => {
       { name: 'Outdoor Storage', location: 'Backyard' }
     ]);
 
+    // Hash passwords for sample users
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash('password123', saltRounds);
+    
     // Create sample users
     const users = await User.insertMany([
-      { name: 'John Doe', role: 'admin', email: 'john@example.com', passwordHash: 'hashedpassword' },
-      { name: 'Jane Smith', role: 'user', email: 'jane@example.com', passwordHash: 'hashedpassword' },
-      { name: 'Mike Johnson', role: 'user', email: 'mike@example.com', passwordHash: 'hashedpassword' }
+      { name: 'John Doe', role: 'admin', email: 'john@example.com', passwordHash },
+      { name: 'Jane Smith', role: 'user', email: 'jane@example.com', passwordHash },
+      { name: 'Mike Johnson', role: 'user', email: 'mike@example.com', passwordHash }
     ]);
 
     // Create sample products
