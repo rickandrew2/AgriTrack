@@ -49,16 +49,27 @@ const seedData = async () => {
       { name: 'Watering Can', category: 'Tools', quantity: 30, storageArea: 'Outdoor Storage' }
     ]);
 
-    // Create sample transactions
+    // Create sample transactions across multiple days
     const transactions = await Transaction.insertMany([
-      { productId: products[0]._id, type: 'add', quantity: 50, userId: users[0]._id, remarks: 'Initial stock' },
-      { productId: products[1]._id, type: 'add', quantity: 100, userId: users[0]._id, remarks: 'New shipment' },
-      { productId: products[2]._id, type: 'dispatch', quantity: 25, userId: users[1]._id, remarks: 'Customer order' },
-      { productId: products[3]._id, type: 'add', quantity: 30, userId: users[2]._id, remarks: 'Greenhouse production' },
-      { productId: products[4]._id, type: 'dispatch', quantity: 5, userId: users[1]._id, remarks: 'Field application' },
-      { productId: products[5]._id, type: 'update', quantity: 8, userId: users[0]._id, remarks: 'Stock adjustment' },
-      { productId: products[6]._id, type: 'add', quantity: 10, userId: users[2]._id, remarks: 'New tools received' },
-      { productId: products[7]._id, type: 'dispatch', quantity: 5, userId: users[1]._id, remarks: 'Equipment request' }
+      // Day 1 - Initial stock
+      { productId: products[0]._id, type: 'add', quantity: 50, userId: users[0]._id, remarks: 'Initial stock', timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      { productId: products[1]._id, type: 'add', quantity: 100, userId: users[0]._id, remarks: 'New shipment', timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      
+      // Day 3 - First dispatches
+      { productId: products[2]._id, type: 'dispatch', quantity: 25, userId: users[1]._id, remarks: 'Customer order', timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+      { productId: products[4]._id, type: 'dispatch', quantity: 5, userId: users[1]._id, remarks: 'Field application', timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+      
+      // Day 5 - More additions
+      { productId: products[3]._id, type: 'add', quantity: 30, userId: users[2]._id, remarks: 'Greenhouse production', timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+      { productId: products[6]._id, type: 'add', quantity: 10, userId: users[2]._id, remarks: 'New tools received', timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+      
+      // Day 7 - Recent activity
+      { productId: products[5]._id, type: 'update', quantity: 8, userId: users[0]._id, remarks: 'Stock adjustment', timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+      { productId: products[7]._id, type: 'dispatch', quantity: 5, userId: users[1]._id, remarks: 'Equipment request', timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+      
+      // Today - Latest transactions
+      { productId: products[0]._id, type: 'dispatch', quantity: 10, userId: users[1]._id, remarks: 'Today dispatch', timestamp: new Date() },
+      { productId: products[1]._id, type: 'add', quantity: 20, userId: users[0]._id, remarks: 'Today restock', timestamp: new Date() }
     ]);
 
     console.log('Sample data seeded successfully!');

@@ -50,6 +50,12 @@ const Dashboard = ({ onLogout }) => {
         }
         
         const data = await response.json();
+        console.log('Dashboard API Response:', data);
+        console.log('Response keys:', Object.keys(data));
+        console.log('All Products:', data.allProducts);
+        console.log('All Products type:', typeof data.allProducts);
+        console.log('All Products length:', data.allProducts?.length);
+        console.log('Recent Transactions:', data.recentTransactions);
         setDashboardStats(data);
       } catch (err) {
         setError(err.message);

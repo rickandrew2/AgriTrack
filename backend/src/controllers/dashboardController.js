@@ -39,6 +39,11 @@ const getDashboardStats = async (req, res) => {
       .sort({ timestamp: -1 })
       .limit(10);
     
+    // Get all products for charts
+    const allProducts = await Product.find().sort({ name: 1 });
+    console.log('Backend - allProducts count:', allProducts.length);
+    console.log('Backend - allProducts sample:', allProducts.slice(0, 2));
+    
     // Calculate percentage changes (you can implement more sophisticated logic later)
     const stats = {
       totalSeeds: {
@@ -57,9 +62,12 @@ const getDashboardStats = async (req, res) => {
         value: remainingStock,
         change: '+0%'
       },
-      recentTransactions
+      recentTransactions,
+      allProducts
     };
     
+    console.log('Backend - Final response keys:', Object.keys(stats));
+    console.log('Backend - allProducts in response:', stats.allProducts ? 'Present' : 'Missing');
     res.json(stats);
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);

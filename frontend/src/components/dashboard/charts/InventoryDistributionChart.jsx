@@ -2,32 +2,26 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const InventoryDistributionChart = ({ dashboardStats }) => {
-  // Calculate inventory distribution by category
+  // Calculate inventory distribution by category from actual products
   const getInventoryDistribution = () => {
-    if (!dashboardStats?.recentTransactions) return [];
+    console.log('InventoryDistributionChart - dashboardStats:', dashboardStats);
+    console.log('InventoryDistributionChart - allProducts:', dashboardStats?.allProducts);
+    if (!dashboardStats?.allProducts) return [];
     
     const categories = {};
     
-    // Group products by category and sum quantities
-    dashboardStats.recentTransactions.forEach(transaction => {
-      if (transaction.productId?.name) {
-        const category = getCategoryFromProduct(transaction.productId.name);
-        if (category) {
-          categories[category] = (categories[category] || 0) + transaction.quantity;
-        }
+    // Group products by category and sum quantities from actual stock levels
+    dashboardStats.allProducts.forEach(product => {
+      const category = product.category;
+      if (category) {
+        categories[category] = (categories[category] || 0) + product.quantity;
       }
     });
     
     return Object.entries(categories).map(([name, value]) => ({ name, value }));
   };
 
-  const getCategoryFromProduct = (productName) => {
-    if (productName.toLowerCase().includes('seed')) return 'Seeds';
-    if (productName.toLowerCase().includes('seedling')) return 'Seedlings';
-    if (productName.toLowerCase().includes('fertilizer') || productName.toLowerCase().includes('compost')) return 'Fertilizers';
-    if (productName.toLowerCase().includes('shovel') || productName.toLowerCase().includes('watering')) return 'Tools';
-    return 'Other';
-  };
+
 
   const data = getInventoryDistribution();
   const COLORS = ['#10B981', '#F59E0B', '#3B82F6', '#8B5CF6', '#EF4444'];

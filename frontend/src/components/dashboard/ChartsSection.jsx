@@ -3,6 +3,7 @@ import InventoryDistributionChart from './charts/InventoryDistributionChart';
 import TransactionActivityChart from './charts/TransactionActivityChart';
 import LowStockAlertChart from './charts/LowStockAlertChart';
 import StorageUtilizationChart from './charts/StorageUtilizationChart';
+import CategoryTrendsChart from './charts/CategoryTrendsChart';
 
 const ChartsSection = ({ dashboardStats, loading, error }) => {
   if (loading) {
@@ -38,11 +39,16 @@ const ChartsSection = ({ dashboardStats, loading, error }) => {
   return (
     <div className="mb-8">
       <h3 className="text-xl font-semibold text-green-800 mb-4">Analytics</h3>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <InventoryDistributionChart dashboardStats={dashboardStats} />
         <TransactionActivityChart dashboardStats={dashboardStats} />
         <LowStockAlertChart dashboardStats={dashboardStats} />
         <StorageUtilizationChart dashboardStats={dashboardStats} />
+      </div>
+      
+      {/* Category Trends - Full Width */}
+      <div className="w-full">
+        <CategoryTrendsChart dashboardStats={dashboardStats} />
       </div>
     </div>
   );

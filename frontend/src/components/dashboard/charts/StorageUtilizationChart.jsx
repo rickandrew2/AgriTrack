@@ -2,35 +2,24 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const StorageUtilizationChart = ({ dashboardStats }) => {
-  // Calculate storage area utilization
+  // Calculate storage area utilization from actual products
   const getStorageUtilization = () => {
-    if (!dashboardStats?.recentTransactions) return [];
+    if (!dashboardStats?.allProducts) return [];
     
     const storageAreas = {};
     
-    // Group by storage area and sum quantities
-    dashboardStats.recentTransactions.forEach(transaction => {
-      if (transaction.productId?.name) {
-        const storageArea = getStorageAreaFromProduct(transaction.productId.name);
-        if (storageArea) {
-          if (!storageAreas[storageArea]) {
-            storageAreas[storageArea] = 0;
-          }
-          storageAreas[storageArea] += transaction.quantity;
+    // Group by storage area and sum quantities from actual stock levels
+    dashboardStats.allProducts.forEach(product => {
+      const storageArea = product.storageArea;
+      if (storageArea) {
+        if (!storageAreas[storageArea]) {
+          storageAreas[storageArea] = 0;
         }
+        storageAreas[storageArea] += product.quantity;
       }
     });
     
     return Object.entries(storageAreas).map(([area, quantity]) => ({ area, quantity }));
-  };
-
-  const getStorageAreaFromProduct = (productName) => {
-    // This is a simplified mapping - in a real app, you'd get this from the product data
-    if (productName.toLowerCase().includes('seed')) return 'Warehouse A';
-    if (productName.toLowerCase().includes('seedling')) return 'Greenhouse 1';
-    if (productName.toLowerCase().includes('fertilizer') || productName.toLowerCase().includes('compost')) return 'Storage Room B';
-    if (productName.toLowerCase().includes('shovel') || productName.toLowerCase().includes('watering')) return 'Outdoor Storage';
-    return 'Other';
   };
 
   const data = getStorageUtilization();
