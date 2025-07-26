@@ -53,11 +53,6 @@ exports.createProduct = async (req, res) => {
     const existingProduct = await Product.findOne({ name });
     
     if (existingProduct) {
-      // Clean up file if it exists
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-      
       return res.status(400).json({ 
         error: `Product with name "${name}" already exists. Please use a different name or update the existing product.` 
       });
@@ -67,23 +62,20 @@ exports.createProduct = async (req, res) => {
       // Handle image upload if file exists
       if (req.file) {
         try {
+          // Convert buffer to base64 string for Cloudinary
+          const b64 = Buffer.from(req.file.buffer).toString('base64');
+          const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+          
           // Upload to Cloudinary
-          const result = await cloudinary.uploader.upload(req.file.path, {
+          const result = await cloudinary.uploader.upload(dataURI, {
             folder: 'agritrack-products',
             use_filename: true,
             unique_filename: true
           });
 
           imageUrl = result.secure_url;
-
-          // Delete the temporary file
-          fs.unlinkSync(req.file.path);
         } catch (uploadError) {
           console.error('Cloudinary upload error:', uploadError);
-          // Delete the temporary file if it exists
-          if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-          }
           return res.status(500).json({ error: 'Failed to upload image' });
         }
       }
@@ -112,10 +104,6 @@ exports.createProduct = async (req, res) => {
         action: 'added'
       });
   } catch (err) {
-    // Clean up file if it exists
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     res.status(500).json({ error: err.message });
   }
 };
@@ -157,11 +145,6 @@ exports.updateProduct = async (req, res) => {
     console.log('Existing product found:', existingProduct);
     
     if (existingProduct) {
-      // Clean up file if it exists
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-      
       console.log('Duplicate name detected, rejecting update');
       return res.status(400).json({ 
         error: `Product with name "${name}" already exists. Please use a different name.` 
@@ -171,23 +154,20 @@ exports.updateProduct = async (req, res) => {
     // Handle image upload if file exists
     if (req.file) {
       try {
+        // Convert buffer to base64 string for Cloudinary
+        const b64 = Buffer.from(req.file.buffer).toString('base64');
+        const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+        
         // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, {
+        const result = await cloudinary.uploader.upload(dataURI, {
           folder: 'agritrack-products',
           use_filename: true,
           unique_filename: true
         });
 
         imageUrl = result.secure_url;
-
-        // Delete the temporary file
-        fs.unlinkSync(req.file.path);
       } catch (uploadError) {
         console.error('Cloudinary upload error:', uploadError);
-        // Delete the temporary file if it exists
-        if (req.file && fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
         return res.status(500).json({ error: 'Failed to upload image' });
       }
     }
@@ -222,10 +202,6 @@ exports.updateProduct = async (req, res) => {
     
     res.json(product);
   } catch (err) {
-    // Clean up file if it exists
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     console.error('Error updating product:', err);
     res.status(500).json({ error: err.message });
   }
@@ -272,8 +248,9 @@ exports.importProducts = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  const filePath = req.file.path;
-  const ext = filePath.split('.').pop().toLowerCase();
+  
+  // Get file extension from original filename
+  const ext = req.file.originalname.split('.').pop().toLowerCase();
   let rows = [];
   let errors = [];
   let added = 0;
@@ -281,22 +258,22 @@ exports.importProducts = async (req, res) => {
 
   try {
     if (ext === 'csv') {
-      // Parse CSV
+      // Parse CSV from buffer
+      const csvContent = req.file.buffer.toString();
       await new Promise((resolve, reject) => {
-        fs.createReadStream(filePath)
+        require('stream').Readable.from(csvContent)
           .pipe(csv())
           .on('data', (row) => rows.push(row))
           .on('end', resolve)
           .on('error', reject);
       });
     } else if (ext === 'xlsx' || ext === 'xls') {
-      // Parse Excel
-      const workbook = XLSX.readFile(filePath);
+      // Parse Excel from buffer
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       rows = XLSX.utils.sheet_to_json(sheet);
     } else {
-      fs.unlinkSync(filePath);
       return res.status(400).json({ error: 'Unsupported file type' });
     }
 
@@ -328,10 +305,8 @@ exports.importProducts = async (req, res) => {
         added++;
       }
     }
-    fs.unlinkSync(filePath);
     res.json({ added, updated, errors });
   } catch (err) {
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     res.status(500).json({ error: err.message });
   }
 };
