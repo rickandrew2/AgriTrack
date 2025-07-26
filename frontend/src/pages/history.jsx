@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ClockIcon, MagnifyingGlassIcon, FunnelIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { buildApiUrl } from '../config/api';
 
 const History = () => {
   const [activityLogs, setActivityLogs] = useState([]);
