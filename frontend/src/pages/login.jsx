@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReCAPTCHA from 'react-google-recaptcha';
 
-const Login = () => {
+const Login = ({ onLoginSuccess }) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -98,8 +98,9 @@ const Login = () => {
   };
 
   const handleRecaptchaChange = (value) => {
+    console.log('reCAPTCHA value:', value);
     setRecaptchaValue(value);
-    if (error) setError('');
+    if (error && error.includes('reCAPTCHA')) setError('');
   };
 
   const handleSubmit = async (e) => {
@@ -164,6 +165,9 @@ const Login = () => {
       if (isLoginMode) {
         // For login, redirect to dashboard
         console.log('Login successful:', data);
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
         navigate('/dashboard');
       } else {
         // For registration, show success message and switch to login mode
@@ -331,14 +335,14 @@ const Login = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 z-10 bg-white rounded"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 z-20 bg-white rounded p-1"
                     >
                       {showPassword ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
                         </svg>
                       ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
@@ -398,14 +402,14 @@ const Login = () => {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 z-10 bg-white rounded"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 z-20 bg-white rounded p-1"
                       >
                         {showConfirmPassword ? (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
                           </svg>
                         ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
@@ -460,9 +464,9 @@ const Login = () => {
                   </div>
                 )}
 
-                {/* Error Message */}
+                                {/* Error Message */}
                 {error && (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
                     <strong className="font-bold">Error!</strong>
                     <span className="block sm:inline"> {error}</span>
                   </div>
@@ -472,8 +476,8 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-green-400 to-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                  >
+                  className="w-full bg-gradient-to-r from-green-400 to-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-sm mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                     {loading ? (isLoginMode ? 'Logging In...' : 'Signing Up...') : (isLoginMode ? 'LOGIN' : 'SIGN IN')}
                   </button>
               </form>
