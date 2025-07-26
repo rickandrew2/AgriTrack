@@ -142,7 +142,7 @@ const Login = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      const endpoint = isLoginMode ? '/api/users/login' : '/api/users/register';
+      const endpoint = isLoginMode ? '/auth/login' : '/auth/register';
       const requestData = isLoginMode 
         ? { email: formData.email, password: formData.password }
         : { fullName: formData.fullName, email: formData.email, password: formData.password };

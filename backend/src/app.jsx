@@ -14,7 +14,13 @@ const app = express();
 // CORS configuration for production
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL, 'https://your-frontend-app.vercel.app']
+    ? [
+        process.env.FRONTEND_URL, 
+        'https://agritrack-app.vercel.app',
+        'https://agritrack-admin.vercel.app',
+        'https://agritrack-lovat.vercel.app',
+        'https://agritrack-rickandrew2s-projects.vercel.app'
+      ]
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
   optionsSuccessStatus: 200
