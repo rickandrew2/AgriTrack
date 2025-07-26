@@ -1,6 +1,7 @@
 const Product = require('../models/products');
 const Transaction = require('../models/transactions');
 const User = require('../models/users');
+const { logReportActivity } = require('../utils/logActivity');
 
 // Generate Inventory Report
 exports.generateInventoryReport = async (req, res) => {
@@ -91,6 +92,13 @@ exports.generateInventoryReport = async (req, res) => {
         storageAreas
       }
     };
+
+    // Log the activity
+    await logReportActivity(
+      req.user,
+      'generate_inventory_report',
+      `Generated inventory report with ${totalProducts} products, ${totalQuantity} total quantity`
+    );
 
     res.json(report);
   } catch (err) {

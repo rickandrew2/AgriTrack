@@ -9,6 +9,9 @@ const getDashboardStats = async (req, res) => {
     // Get total seedlings (products with category 'Seedlings')
     const totalSeedlings = await Product.countDocuments({ category: 'Seedlings' });
     
+    // Get total HVC (products with category 'HVC (High Value Crops)')
+    const totalHVC = await Product.countDocuments({ category: 'HVC (High Value Crops)' });
+    
     // Get total dispatch items (sum of quantities from dispatch transactions)
     const dispatchResult = await Transaction.aggregate([
       { $match: { type: 'dispatch' } },
@@ -52,6 +55,10 @@ const getDashboardStats = async (req, res) => {
       },
       totalSeedlings: {
         value: totalSeedlings,
+        change: '+0%'
+      },
+      totalHVC: {
+        value: totalHVC,
         change: '+0%'
       },
       totalDispatchItems: {

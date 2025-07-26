@@ -4,10 +4,7 @@ import { MagnifyingGlassIcon, ChevronDownIcon, PlusIcon, XMarkIcon, CheckCircleI
 const CATEGORY_COLORS = {
   Seeds: 'bg-green-100 text-green-800',
   Seedlings: 'bg-orange-100 text-orange-800',
-  Fertilizers: 'bg-blue-100 text-blue-800',
-  Tools: 'bg-purple-100 text-purple-800',
-  Grains: 'bg-yellow-100 text-yellow-800',
-  Other: 'bg-gray-100 text-gray-800',
+  'HVC (High Value Crops)': 'bg-purple-100 text-purple-800',
 };
 
 const DEFAULT_IMAGE = 'https://via.placeholder.com/40x40?text=No+Image';
@@ -26,6 +23,7 @@ const Products = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -34,8 +32,29 @@ const Products = () => {
     storageArea: '',
     imageUrl: ''
   });
+  const [addFormData, setAddFormData] = useState({
+    name: '',
+    category: '',
+    quantity: '',
+    storageArea: ''
+  });
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [editLoading, setEditLoading] = useState(false);
+  const [addLoading, setAddLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 10;
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -62,10 +81,92 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  const filteredProducts = products.filter(product =>
-    product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.category?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAndSortedProducts = products
+    .filter(product => {
+      const matchesSearch = product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           product.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           product.storageArea?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+      
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      let aValue = a[sortBy];
+      let bValue = b[sortBy];
+      
+      // Handle numeric sorting for quantity
+      if (sortBy === 'quantity') {
+        aValue = parseInt(aValue) || 0;
+        bValue = parseInt(bValue) || 0;
+      } else {
+        // Handle string sorting
+        aValue = (aValue || '').toString().toLowerCase();
+        bValue = (bValue || '').toString().toLowerCase();
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+  // Pagination logic
+  const totalProducts = filteredAndSortedProducts.length;
+  const totalPages = Math.ceil(totalProducts / productsPerPage);
+  const paginatedProducts = filteredAndSortedProducts.slice(
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
   );
+
+  useEffect(() => {
+    // Reset to first page if filters/search change and current page is out of range
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [searchQuery, categoryFilter, sortBy, sortOrder, totalPages]);
+
+  const sortOptions = [
+    { value: 'name', label: 'Name' },
+    { value: 'category', label: 'Category' },
+    { value: 'quantity', label: 'Quantity' },
+    { value: 'storageArea', label: 'Storage Area' }
+  ];
+
+  const categoryOptions = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'Seeds', label: 'Seeds' },
+    { value: 'Seedlings', label: 'Seedlings' },
+    { value: 'HVC (High Value Crops)', label: 'HVC (High Value Crops)' }
+  ];
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setShowSortDropdown(false);
+  };
+
+  const getSortIcon = (field) => {
+    if (sortBy !== field) return null;
+    return sortOrder === 'asc' ? '↑' : '↓';
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showSortDropdown && !event.target.closest('.sort-dropdown')) {
+        setShowSortDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSortDropdown]);
 
   const handleDispatch = async (e) => {
     e.preventDefault();
@@ -153,6 +254,85 @@ const Products = () => {
     setShowDeleteModal(true);
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    setAddLoading(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      
+      // Add form data
+      formData.append('name', addFormData.name);
+      formData.append('category', addFormData.category);
+      formData.append('quantity', addFormData.quantity);
+      formData.append('storageArea', addFormData.storageArea);
+      
+      // Add image if selected
+      if (selectedImage) {
+        formData.append('image', selectedImage);
+      }
+      
+      const response = await fetch('http://localhost:5000/api/products', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create product');
+      }
+
+      // Refresh products
+      const productsResponse = await fetch('http://localhost:5000/api/products', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (productsResponse.ok) {
+        const updatedProducts = await productsResponse.json();
+        setProducts(updatedProducts);
+      }
+
+      // Reset form and close modal
+      setShowAddModal(false);
+      setAddFormData({
+        name: '',
+        category: '',
+        quantity: '',
+        storageArea: ''
+      });
+      setSelectedImage(null);
+      setImagePreview('');
+
+      // Show success toast
+      setSuccessMessage(`Successfully added ${addFormData.name}`);
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 4000);
+
+    } catch (err) {
+      alert('Error creating product: ' + err.message);
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     setEditLoading(true);
@@ -165,13 +345,37 @@ const Products = () => {
       console.log('Product ID:', editingProduct._id);
       console.log('Edit data:', editFormData);
       
+      const formData = new FormData();
+      
+      // Add form data
+      formData.append('name', editFormData.name);
+      formData.append('category', editFormData.category);
+      formData.append('quantity', editFormData.quantity);
+      formData.append('storageArea', editFormData.storageArea);
+      
+      // Only add imageUrl if it exists and no new image is selected
+      if (editFormData.imageUrl && !selectedImage) {
+        formData.append('imageUrl', editFormData.imageUrl);
+      }
+      
+      // Add image if selected
+      if (selectedImage) {
+        formData.append('image', selectedImage);
+      }
+      
+      // Debug: Log FormData contents
+      console.log('FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+      
       const response = await fetch(url, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
+          // Don't set Content-Type for FormData - browser will set it automatically
         },
-        body: JSON.stringify(editFormData)
+        body: formData
       });
 
       if (!response.ok) {
@@ -200,6 +404,8 @@ const Products = () => {
         storageArea: '',
         imageUrl: ''
       });
+      setSelectedImage(null);
+      setImagePreview('');
 
       // Show success toast
       setSuccessMessage(`Successfully updated ${editFormData.name}`);
@@ -263,6 +469,73 @@ const Products = () => {
     }
   };
 
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('all');
+    setCurrentPage(1);
+  };
+
+  const handleImportFileChange = (e) => {
+    setImportFile(e.target.files[0]);
+  };
+
+  const handleImportSubmit = async (e) => {
+    e.preventDefault();
+    if (!importFile) return;
+    setImportLoading(true);
+    setImportResult(null);
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('file', importFile);
+      const response = await fetch('http://localhost:5000/api/products/import', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Import failed');
+      setImportResult(result);
+      // Refresh products
+      const productsResponse = await fetch('http://localhost:5000/api/products', {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (productsResponse.ok) {
+        const updatedProducts = await productsResponse.json();
+        setProducts(updatedProducts);
+      }
+    } catch (err) {
+      setImportResult({ error: err.message });
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleExport = async (format) => {
+    setExportLoading(true);
+    setShowExportDropdown(false);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/products/export?format=${format}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Export failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `products_export.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      alert('Export failed: ' + err.message);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-green-50 p-8">
       {/* Success Toast */}
@@ -285,36 +558,133 @@ const Products = () => {
       )}
 
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-green-800">PRODUCT</h1>
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col space-y-6 mb-8">
+        {/* Title Row */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-bold text-green-800">PRODUCT</h1>
+        </div>
+        
+        {/* Controls Row */}
+        <div className="flex items-center space-x-4 flex-wrap gap-4">
           {/* Search Bar */}
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-800" />
             <input
               type="text"
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-80 pl-10 pr-4 py-3 bg-white rounded-full border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm"
+              className="w-72 pl-10 pr-4 py-3 bg-white rounded-full border border-gray-200 focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm"
             />
           </div>
-          {/* Sort By Button */}
-          <button className="flex items-center space-x-2 bg-white px-4 py-3 rounded-lg border border-green-800 text-green-800 font-medium shadow-sm">
-            <span>SORT BY</span>
-            <ChevronDownIcon className="w-4 h-4" />
-          </button>
+          
+          {/* Category Filter */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-3 bg-white rounded-lg border border-green-800 text-green-800 font-medium shadow-sm focus:ring-2 focus:ring-green-500 focus:border-transparent min-w-[140px] flex-shrink-0"
+          >
+            {categoryOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          
+          {/* Sort By Dropdown */}
+          <div className="relative sort-dropdown flex-shrink-0">
+            <button 
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+              className="flex items-center space-x-2 bg-white px-4 py-3 rounded-lg border border-green-800 text-green-800 font-medium shadow-sm hover:bg-gray-50 min-w-[150px]"
+            >
+              <span>SORT BY: {sortOptions.find(opt => opt.value === sortBy)?.label}</span>
+              <ChevronDownIcon className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showSortDropdown && (
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                {sortOptions.map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleSort(option.value)}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between"
+                  >
+                    <span>{option.label}</span>
+                    <span className="text-green-600">{getSortIcon(option.value)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          
           {/* Action Buttons */}
-          <button className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm">
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm flex-shrink-0"
+          >
             +Add Product
           </button>
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm flex-shrink-0"
+          >
+            Import
+          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+              disabled={exportLoading}
+              className="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm flex-shrink-0 disabled:opacity-50"
+            >
+              {exportLoading ? 'Exporting...' : 'Export'}
+            </button>
+            {showExportDropdown && (
+              <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                <button
+                  onClick={() => handleExport('csv')}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50"
+                >
+                  Export as CSV
+                </button>
+                <button
+                  onClick={() => handleExport('xlsx')}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50"
+                >
+                  Export as Excel
+                </button>
+              </div>
+            )}
+          </div>
           <button 
             onClick={() => setShowDispatchModal(true)}
-            className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm"
+            className="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm flex-shrink-0"
           >
             +Dispatch
           </button>
         </div>
+      </div>
+
+      {/* Results Counter and Clear Filters Row */}
+      <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
+        <div>
+          Showing {paginatedProducts.length > 0 ? ((currentPage - 1) * productsPerPage + 1) : 0}
+          {paginatedProducts.length > 1 ? `–${(currentPage - 1) * productsPerPage + paginatedProducts.length}` : ''}
+          of {products.length} products
+          {(searchQuery || categoryFilter !== 'all') && (
+            <span className="ml-2">
+              (filtered by {searchQuery ? `"${searchQuery}"` : ''}{searchQuery && categoryFilter !== 'all' ? ' and ' : ''}{categoryFilter !== 'all' ? categoryFilter : ''})
+            </span>
+          )}
+        </div>
+        {(searchQuery || categoryFilter !== 'all') && (
+          <button
+            onClick={handleClearFilters}
+            className="inline-flex items-center gap-1 text-green-800 font-semibold bg-green-100 hover:bg-green-200 hover:text-green-900 transition-colors duration-150 rounded-full px-4 py-1 shadow-sm border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400"
+          >
+            <XMarkIcon className="w-4 h-4 mr-1" />
+            Clear filters
+          </button>
+        )}
       </div>
 
       {/* Product Table */}
@@ -340,8 +710,8 @@ const Products = () => {
             <div className="text-center py-8">
               <p className="text-red-600 font-medium">Error: {error}</p>
             </div>
-          ) : filteredProducts.length > 0 ? (
-            filteredProducts.map((product, index) => (
+          ) : paginatedProducts.length > 0 ? (
+            paginatedProducts.map((product, index) => (
               <div key={index} className="px-6 py-4 hover:bg-gray-100">
                 <div className="grid grid-cols-6 gap-4 items-center">
                   <div>
@@ -385,6 +755,35 @@ const Products = () => {
           )}
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center mt-6 space-x-2">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className={`px-3 py-2 rounded-lg font-medium border border-green-800 text-green-800 bg-white hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            Prev
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`px-3 py-2 rounded-lg font-medium border ${currentPage === page ? 'bg-green-800 text-white' : 'border-green-800 text-green-800 bg-white hover:bg-green-50'}`}
+            >
+              {page}
+            </button>
+          ))}
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-2 rounded-lg font-medium border border-green-800 text-green-800 bg-white hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* Dispatch Modal */}
       {showDispatchModal && (
@@ -528,10 +927,7 @@ const Products = () => {
                     <option value="">Select category...</option>
                     <option value="Seeds">Seeds</option>
                     <option value="Seedlings">Seedlings</option>
-                    <option value="Fertilizers">Fertilizers</option>
-                    <option value="Tools">Tools</option>
-                    <option value="Grains">Grains</option>
-                    <option value="Other">Other</option>
+                    <option value="HVC (High Value Crops)">HVC (High Value Crops)</option>
                   </select>
                 </div>
 
@@ -564,18 +960,37 @@ const Products = () => {
                   />
                 </div>
 
-                {/* Image URL */}
+                {/* Image Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Image URL (Optional)
+                    Product Image (Optional)
                   </label>
+                  {editFormData.imageUrl && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-500 mb-1">Current Image:</p>
+                      <img
+                        src={editFormData.imageUrl}
+                        alt="Current"
+                        className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
                   <input
-                    type="url"
-                    value={editFormData.imageUrl}
-                    onChange={(e) => setEditFormData({...editFormData, imageUrl: e.target.value})}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="https://example.com/image.jpg"
                   />
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500 mb-1">New Image Preview:</p>
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
@@ -628,6 +1043,181 @@ const Products = () => {
                   {deleteLoading ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Product Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-green-800">Add New Product</h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddProduct}>
+              <div className="space-y-4">
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Name
+                  </label>
+                  <input
+                    type="text"
+                    value={addFormData.name}
+                    onChange={(e) => setAddFormData({...addFormData, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category
+                  </label>
+                  <select
+                    value={addFormData.category}
+                    onChange={(e) => setAddFormData({...addFormData, category: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select category...</option>
+                    <option value="Seeds">Seeds</option>
+                    <option value="Seedlings">Seedlings</option>
+                    <option value="HVC (High Value Crops)">HVC (High Value Crops)</option>
+                  </select>
+                </div>
+
+                {/* Quantity */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={addFormData.quantity}
+                    onChange={(e) => setAddFormData({...addFormData, quantity: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                {/* Storage Area */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Storage Area
+                  </label>
+                  <input
+                    type="text"
+                    value={addFormData.storageArea}
+                    onChange={(e) => setAddFormData({...addFormData, storageArea: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Image (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={addLoading}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {addLoading ? 'Adding...' : 'Add Product'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+            <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              onClick={() => { setShowImportModal(false); setImportFile(null); setImportResult(null); }}
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+            <h2 className="text-2xl font-bold mb-4 text-blue-800">Import Products</h2>
+            <form onSubmit={handleImportSubmit} className="space-y-4">
+              <input
+                type="file"
+                accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                onChange={handleImportFileChange}
+                className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+              <button
+                type="submit"
+                disabled={importLoading || !importFile}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50"
+              >
+                {importLoading ? 'Importing...' : 'Import'}
+              </button>
+            </form>
+            {importResult && (
+              <div className="mt-4">
+                {importResult.error ? (
+                  <div className="text-red-600 font-medium">{importResult.error}</div>
+                ) : (
+                  <div className="text-green-700">
+                    <div>Added: <span className="font-bold">{importResult.added}</span></div>
+                    <div>Updated: <span className="font-bold">{importResult.updated}</span></div>
+                    {importResult.errors && importResult.errors.length > 0 && (
+                      <div className="mt-2 text-yellow-700">
+                        {importResult.errors.length} row(s) skipped due to errors.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="mt-4 text-xs text-gray-500">
+              <div>Accepted columns: <b>name, category, quantity, storageArea, imageUrl</b></div>
+              <div>File types: .csv, .xlsx, .xls</div>
+              <div>Existing products (same name, category, storageArea) will have their quantity increased.</div>
             </div>
           </div>
         </div>

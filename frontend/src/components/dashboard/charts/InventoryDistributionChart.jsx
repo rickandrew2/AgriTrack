@@ -24,7 +24,7 @@ const InventoryDistributionChart = ({ dashboardStats }) => {
 
 
   const data = getInventoryDistribution();
-  const COLORS = ['#10B981', '#F59E0B', '#3B82F6', '#8B5CF6', '#EF4444'];
+  const COLORS = ['#10B981', '#F59E0B', '#8B5CF6'];
 
   return (
     <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50">

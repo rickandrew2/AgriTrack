@@ -11,10 +11,17 @@
     "build": "cd frontend && npm run build",
     "start": "cd backend && npm start"
   },
-  "keywords": ["agriculture", "management", "tracking"],
+  "keywords": [
+    "agriculture",
+    "management",
+    "tracking"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "json2csv": "^6.0.0-alpha.2"
   }
-} 
+}

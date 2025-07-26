@@ -52,13 +52,13 @@ const StockLevelsOverTimeChart = ({ dashboardStats }) => {
   
   // Fallback data if no API data is available
   const fallbackData = [
-    { date: '7/20/2025', 'Tomato Seeds': 35, 'Corn Seeds': 110, 'Tomato Seedlings': 45, 'Pepper Seedlings': 25, 'NPK Fertilizer': 15, 'Organic Compost': 5, 'Garden Shovel': 8, 'Watering Can': 20 },
-    { date: '7/21/2025', 'Tomato Seeds': 38, 'Corn Seeds': 115, 'Tomato Seedlings': 48, 'Pepper Seedlings': 28, 'NPK Fertilizer': 18, 'Organic Compost': 6, 'Garden Shovel': 9, 'Watering Can': 22 },
-    { date: '7/22/2025', 'Tomato Seeds': 42, 'Corn Seeds': 118, 'Tomato Seedlings': 52, 'Pepper Seedlings': 32, 'NPK Fertilizer': 22, 'Organic Compost': 7, 'Garden Shovel': 12, 'Watering Can': 24 },
-    { date: '7/23/2025', 'Tomato Seeds': 45, 'Corn Seeds': 125, 'Tomato Seedlings': 55, 'Pepper Seedlings': 35, 'NPK Fertilizer': 25, 'Organic Compost': 9, 'Garden Shovel': 15, 'Watering Can': 28 },
-    { date: '7/24/2025', 'Tomato Seeds': 48, 'Corn Seeds': 130, 'Tomato Seedlings': 58, 'Pepper Seedlings': 38, 'NPK Fertilizer': 28, 'Organic Compost': 10, 'Garden Shovel': 18, 'Watering Can': 30 },
-    { date: '7/25/2025', 'Tomato Seeds': 50, 'Corn Seeds': 135, 'Tomato Seedlings': 60, 'Pepper Seedlings': 40, 'NPK Fertilizer': 30, 'Organic Compost': 12, 'Garden Shovel': 20, 'Watering Can': 32 },
-    { date: '7/26/2025', 'Tomato Seeds': 40, 'Corn Seeds': 120, 'Tomato Seedlings': 50, 'Pepper Seedlings': 30, 'NPK Fertilizer': 20, 'Organic Compost': 8, 'Garden Shovel': 10, 'Watering Can': 25 }
+    { date: '7/20/2025', 'Tomato Seeds': 35, 'Corn Seeds': 110, 'Rice Seeds': 95, 'Tomato Seedlings': 45, 'Pepper Seedlings': 25, 'Lettuce Seedlings': 60, 'Fresh Tomatoes': 30, 'Bell Peppers': 20, 'Strawberries': 15 },
+    { date: '7/21/2025', 'Tomato Seeds': 38, 'Corn Seeds': 115, 'Rice Seeds': 98, 'Tomato Seedlings': 48, 'Pepper Seedlings': 28, 'Lettuce Seedlings': 65, 'Fresh Tomatoes': 35, 'Bell Peppers': 25, 'Strawberries': 18 },
+    { date: '7/22/2025', 'Tomato Seeds': 42, 'Corn Seeds': 118, 'Rice Seeds': 102, 'Tomato Seedlings': 52, 'Pepper Seedlings': 32, 'Lettuce Seedlings': 70, 'Fresh Tomatoes': 40, 'Bell Peppers': 30, 'Strawberries': 22 },
+    { date: '7/23/2025', 'Tomato Seeds': 45, 'Corn Seeds': 125, 'Rice Seeds': 105, 'Tomato Seedlings': 55, 'Pepper Seedlings': 35, 'Lettuce Seedlings': 75, 'Fresh Tomatoes': 45, 'Bell Peppers': 35, 'Strawberries': 25 },
+    { date: '7/24/2025', 'Tomato Seeds': 48, 'Corn Seeds': 130, 'Rice Seeds': 108, 'Tomato Seedlings': 58, 'Pepper Seedlings': 38, 'Lettuce Seedlings': 80, 'Fresh Tomatoes': 50, 'Bell Peppers': 40, 'Strawberries': 28 },
+    { date: '7/25/2025', 'Tomato Seeds': 50, 'Corn Seeds': 135, 'Rice Seeds': 110, 'Tomato Seedlings': 60, 'Pepper Seedlings': 40, 'Lettuce Seedlings': 85, 'Fresh Tomatoes': 55, 'Bell Peppers': 45, 'Strawberries': 30 },
+    { date: '7/26/2025', 'Tomato Seeds': 40, 'Corn Seeds': 120, 'Rice Seeds': 100, 'Tomato Seedlings': 50, 'Pepper Seedlings': 30, 'Lettuce Seedlings': 70, 'Fresh Tomatoes': 40, 'Bell Peppers': 30, 'Strawberries': 20 }
   ];
   
   const chartData = data.length > 0 ? data : fallbackData;

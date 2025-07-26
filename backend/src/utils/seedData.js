@@ -15,20 +15,27 @@ const seedData = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB for seeding...');
     
+    // Clear existing data
+    await Category.deleteMany({});
+    await StorageArea.deleteMany({});
+    await Product.deleteMany({});
+    await Transaction.deleteMany({});
+    await User.deleteMany({});
+    console.log('Cleared existing data...');
+    
     // Create sample categories
     const categories = await Category.insertMany([
       { name: 'Seeds', description: 'Various types of seeds' },
       { name: 'Seedlings', description: 'Young plants ready for transplanting' },
-      { name: 'Fertilizers', description: 'Plant nutrients and fertilizers' },
-      { name: 'Tools', description: 'Gardening and farming tools' }
+      { name: 'HVC (High Value Crops)', description: 'High value crops and produce' }
     ]);
 
     // Create sample storage areas
     const storageAreas = await StorageArea.insertMany([
       { name: 'Warehouse A', location: 'Main Building' },
       { name: 'Greenhouse 1', location: 'East Wing' },
-      { name: 'Storage Room B', location: 'West Wing' },
-      { name: 'Outdoor Storage', location: 'Backyard' }
+      { name: 'Cold Storage', location: 'North Wing' },
+      { name: 'Storage Room B', location: 'West Wing' }
     ]);
 
     // Hash passwords for sample users
@@ -46,12 +53,13 @@ const seedData = async () => {
     const products = await Product.insertMany([
       { name: 'Tomato Seeds', category: 'Seeds', quantity: 150, storageArea: 'Warehouse A' },
       { name: 'Corn Seeds', category: 'Seeds', quantity: 200, storageArea: 'Warehouse A' },
+      { name: 'Rice Seeds', category: 'Seeds', quantity: 120, storageArea: 'Warehouse A' },
       { name: 'Tomato Seedlings', category: 'Seedlings', quantity: 75, storageArea: 'Greenhouse 1' },
       { name: 'Pepper Seedlings', category: 'Seedlings', quantity: 50, storageArea: 'Greenhouse 1' },
-      { name: 'NPK Fertilizer', category: 'Fertilizers', quantity: 25, storageArea: 'Storage Room B' },
-      { name: 'Organic Compost', category: 'Fertilizers', quantity: 8, storageArea: 'Storage Room B' },
-      { name: 'Garden Shovel', category: 'Tools', quantity: 15, storageArea: 'Outdoor Storage' },
-      { name: 'Watering Can', category: 'Tools', quantity: 30, storageArea: 'Outdoor Storage' }
+      { name: 'Lettuce Seedlings', category: 'Seedlings', quantity: 80, storageArea: 'Greenhouse 1' },
+      { name: 'Fresh Tomatoes', category: 'HVC (High Value Crops)', quantity: 45, storageArea: 'Cold Storage' },
+      { name: 'Bell Peppers', category: 'HVC (High Value Crops)', quantity: 30, storageArea: 'Cold Storage' },
+      { name: 'Strawberries', category: 'HVC (High Value Crops)', quantity: 25, storageArea: 'Cold Storage' }
     ]);
 
     // Create sample transactions across multiple days

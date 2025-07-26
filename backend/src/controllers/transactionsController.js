@@ -1,5 +1,6 @@
 const Transaction = require('../models/transactions');
 const Product = require('../models/products');
+const { logProductActivity } = require('../utils/logActivity');
 
 // Get all transactions
 exports.getAllTransactions = async (req, res) => {
@@ -73,6 +74,14 @@ exports.createTransaction = async (req, res) => {
     const populatedTransaction = await Transaction.findById(transaction._id)
       .populate('productId', 'name category')
       .populate('userId', 'name');
+
+    // Log the activity
+    await logProductActivity(
+      req.user,
+      type === 'dispatch' ? 'dispatch_product' : 'adjust_product',
+      product,
+      `${type.charAt(0).toUpperCase() + type.slice(1)} ${quantity} units of ${product.name}${remarks ? ` - ${remarks}` : ''}`
+    );
 
     res.status(201).json(populatedTransaction);
   } catch (err) {
