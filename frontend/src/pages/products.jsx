@@ -303,7 +303,7 @@ const Products = () => {
       }
 
       // Refresh products
-      const productsResponse = await fetch('http://localhost:5000/api/products', {
+      const productsResponse = await fetch(buildApiUrl('/products'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -456,7 +456,7 @@ const Products = () => {
       }
 
       // Refresh products
-      const productsResponse = await fetch('http://localhost:5000/api/products', {
+      const productsResponse = await fetch(buildApiUrl('/products'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
