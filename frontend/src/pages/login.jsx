@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -24,6 +26,8 @@ const Login = () => {
     e.preventDefault();
     if (isLoginMode) {
       console.log('Login submitted:', { email: formData.email, password: formData.password });
+      // Navigate to dashboard after successful login
+      navigate('/dashboard');
     } else {
       console.log('Registration submitted:', formData);
     }
