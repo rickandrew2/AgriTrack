@@ -4,17 +4,28 @@ import {
   CubeIcon, 
   DocumentChartBarIcon, 
   ArchiveBoxIcon,
-  CloudArrowUpIcon
+  CloudArrowUpIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 import logo from '../assets/logo.png';
 
 const SideNavigation = ({ activeTab, onTabChange }) => {
+  // Get user role from localStorage
+  let userRole = null;
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    userRole = user?.role?.toLowerCase();
+  } catch (e) {
+    userRole = null;
+  }
+
   const navigationItems = [
     { id: 'dashboard', name: 'DASHBOARD', icon: ChartBarIcon },
     { id: 'product', name: 'PRODUCT', icon: CubeIcon },
     { id: 'report', name: 'REPORT', icon: DocumentChartBarIcon },
     { id: 'history', name: 'HISTORY', icon: ArchiveBoxIcon },
-    { id: 'backup', name: 'BACKUP', icon: CloudArrowUpIcon },
+    // Only show user management for admin
+    ...(userRole === 'admin' ? [{ id: 'usermanagement', name: 'USER MANAGEMENT', icon: UsersIcon }] : [])
   ];
 
   return (

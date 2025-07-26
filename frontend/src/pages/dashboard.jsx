@@ -7,6 +7,21 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Get user name from localStorage
+  let userName = 'User';
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    // Extract first and second names if available
+    if (user?.name) {
+      const nameParts = user.name.trim().split(' ');
+      userName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0];
+    } else {
+      userName = 'User';
+    }
+  } catch (e) {
+    userName = 'User';
+  }
+
   // Fetch dashboard data
   useEffect(() => {
     const fetchDashboardStats = async () => {
@@ -81,8 +96,8 @@ const Dashboard = () => {
         <div>
           <h1 className="text-3xl font-bold text-green-800 mb-2">INVENTORY REPORT</h1>
           <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-6 shadow-2xl backdrop-blur-sm border border-green-500/20">
-            <h2 className="text-4xl font-bold text-white mb-1">WELCOME BACK, Morales</h2>
-            <p className="text-green-100 text-sm italic">Here what's happen to you naging dellulu ka pero najan na ang update</p>
+            <h2 className="text-4xl font-bold text-white mb-1">WELCOME BACK, {userName}</h2>
+            <p className="text-green-100 text-sm italic">Here you can view the latest inventory statistics, recent transactions, and trends to help you manage your stock efficiently.</p>
           </div>
         </div>
       </div>

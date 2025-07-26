@@ -140,16 +140,8 @@ const Reports = () => {
         const data = await response.json();
         setCurrentReportData(data);
         
-        // Add to reports list
-        const newReport = {
-          id: Date.now(),
-          name: `${selectedReport.charAt(0).toUpperCase() + selectedReport.slice(1)} Report - ${new Date().toLocaleDateString()}`,
-          date: new Date().toISOString().split('T')[0],
-          type: selectedReport,
-          status: 'completed',
-          size: `${(JSON.stringify(data).length / 1024 / 1024).toFixed(1)} MB`
-        };
-        setReports(prev => [newReport, ...prev]);
+        // Refresh the reports list to get the latest data from backend
+        await fetchRecentReports();
       } else {
         console.error('Failed to generate report');
       }
@@ -756,7 +748,7 @@ const Reports = () => {
                   <h5 className="font-semibold text-red-800 mb-2">Out of Stock ({currentReportData.outOfStockProducts.length})</h5>
                   <div className="space-y-1">
                     {currentReportData.outOfStockProducts.slice(0, 3).map((product, index) => (
-                      <p key={index} className="text-sm text-red-700">• {product.name}</p>
+                      <p key={product._id || `out-of-stock-${index}`} className="text-sm text-red-700">• {product.name}</p>
                     ))}
                     {currentReportData.outOfStockProducts.length > 3 && (
                       <p className="text-sm text-red-600">+{currentReportData.outOfStockProducts.length - 3} more</p>
@@ -770,7 +762,7 @@ const Reports = () => {
                   <h5 className="font-semibold text-yellow-800 mb-2">Low Stock ({currentReportData.lowStockProducts.length})</h5>
                   <div className="space-y-1">
                     {currentReportData.lowStockProducts.slice(0, 3).map((product, index) => (
-                      <p key={index} className="text-sm text-yellow-700">• {product.name} ({product.quantity} left)</p>
+                      <p key={product._id || `low-stock-${index}`} className="text-sm text-yellow-700">• {product.name} ({product.quantity} left)</p>
                     ))}
                     {currentReportData.lowStockProducts.length > 3 && (
                       <p className="text-sm text-yellow-600">+{currentReportData.lowStockProducts.length - 3} more</p>
@@ -917,7 +909,7 @@ const Reports = () => {
             {currentReportData.userStats && currentReportData.userStats.length > 0 ? (
               <div className="space-y-3">
                 {currentReportData.userStats.slice(0, 5).map((userStat, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={userStat.user?._id || `user-stat-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-800">{userStat.user?.name || 'Unknown User'}</p>
                       <p className="text-sm text-gray-600">{userStat.total} activities</p>
@@ -959,7 +951,7 @@ const Reports = () => {
           {currentReportData.allTransactions && currentReportData.allTransactions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {currentReportData.allTransactions.slice(0, 6).map((transaction, index) => (
-                <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div key={transaction._id || `transaction-${index}`} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-2">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       transaction.type === 'dispatch' ? 'bg-red-100 text-red-800' :
@@ -1017,6 +1009,233 @@ const Reports = () => {
           </button>
         </div>
 
+        {/* Report Filters */}
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl p-8 shadow-xl border border-white/50">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-green-800 mb-2">Report Filters</h3>
+              <p className="text-gray-600">Customize your report data by selecting specific criteria below</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-green-600 font-medium">Active Filters: {Object.values(filters).filter(f => f !== '').length}</span>
+            </div>
+          </div>
+
+          {/* Filter Description */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200 mb-6">
+            <div className="flex items-start space-x-3">
+              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white text-xs font-bold">i</span>
+              </div>
+              <div>
+                <h4 className="font-semibold text-blue-800 mb-1">How Filters Work</h4>
+                <p className="text-blue-700 text-sm leading-relaxed">
+                  <strong>Inventory Reports:</strong> Show stock levels based on your selected criteria. 
+                  <strong>Transaction Reports:</strong> Show system activities (dispatch, add, update) within your specified filters.
+                  Leave filters empty to include all data.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <CalendarIcon className="w-4 h-4 mr-1 text-green-600" />
+                Start Date
+                {filters.startDate && (
+                  <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                )}
+              </label>
+              <input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => handleFilterUpdate('startDate', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                placeholder="Select start date"
+              />
+              <p className="text-xs text-gray-500 mt-1">Include data from this date onwards</p>
+            </div>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <CalendarIcon className="w-4 h-4 mr-1 text-green-600" />
+                End Date
+                {filters.endDate && (
+                  <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                )}
+              </label>
+              <input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => handleFilterUpdate('endDate', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                placeholder="Select end date"
+              />
+              <p className="text-xs text-gray-500 mt-1">Include data up to this date</p>
+            </div>
+            
+            {selectedReport === 'inventory' && (
+              <>
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <ChartBarIcon className="w-4 h-4 mr-1 text-green-600" />
+                    Category
+                    {filters.category && (
+                      <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                    )}
+                  </label>
+                  <select
+                    value={filters.category}
+                    onChange={(e) => handleFilterUpdate('category', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
+                  >
+                    <option value="">All Categories</option>
+                    {filterOptions.categories.map((category, index) => (
+                      <option key={index} value={category}>{category}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Filter by product category</p>
+                </div>
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <CogIcon className="w-4 h-4 mr-1 text-green-600" />
+                    Storage Area
+                    {filters.storageArea && (
+                      <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                    )}
+                  </label>
+                  <select
+                    value={filters.storageArea}
+                    onChange={(e) => handleFilterUpdate('storageArea', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
+                  >
+                    <option value="">All Storage Areas</option>
+                    {filterOptions.storageAreas.map((area, index) => (
+                      <option key={index} value={area}>{area}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Filter by storage location</p>
+                </div>
+              </>
+            )}
+            
+            {selectedReport === 'transactions' && (
+              <>
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <DocumentChartBarIcon className="w-4 h-4 mr-1 text-green-600" />
+                    Transaction Type
+                    {filters.type && (
+                      <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                    )}
+                  </label>
+                  <select
+                    value={filters.type}
+                    onChange={(e) => handleFilterUpdate('type', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
+                  >
+                    <option value="">All Types</option>
+                    {filterOptions.transactionTypes.map((type, index) => (
+                      <option key={index} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Filter by transaction type</p>
+                </div>
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <ShieldCheckIcon className="w-4 h-4 mr-1 text-green-600" />
+                    User
+                    {filters.userId && (
+                      <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                    )}
+                  </label>
+                  <select
+                    value={filters.userId}
+                    onChange={(e) => handleFilterUpdate('userId', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
+                  >
+                    <option value="">All Users</option>
+                    {filterOptions.users.map((user, index) => (
+                      <option key={index} value={user._id}>{user.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Filter by user</p>
+                </div>
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <DocumentChartBarIcon className="w-4 h-4 mr-1 text-green-600" />
+                    Product
+                    {filters.productId && (
+                      <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                    )}
+                  </label>
+                  <select
+                    value={filters.productId}
+                    onChange={(e) => handleFilterUpdate('productId', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
+                  >
+                    <option value="">All Products</option>
+                    {filterOptions.products.map((product, index) => (
+                      <option key={index} value={product._id}>{product.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Filter by product</p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Quick Filter Presets */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Presets</h4>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  const today = new Date();
+                  const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                  setFilters({
+                    startDate: lastWeek.toISOString().split('T')[0],
+                    endDate: today.toISOString().split('T')[0],
+                    category: '',
+                    storageArea: '',
+                    type: '',
+                    userId: '',
+                    productId: ''
+                  });
+                }}
+                className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200 transition-colors"
+              >
+                Last 7 Days
+              </button>
+              <button
+                onClick={() => {
+                  const today = new Date();
+                  const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+                  setFilters({
+                    startDate: lastMonth.toISOString().split('T')[0],
+                    endDate: today.toISOString().split('T')[0],
+                    category: '',
+                    storageArea: '',
+                    type: '',
+                    userId: '',
+                    productId: ''
+                  });
+                }}
+                className="px-3 py-1.5 bg-purple-100 text-purple-700 text-xs rounded-full hover:bg-purple-200 transition-colors"
+              >
+                Last 30 Days
+              </button>
+              <button
+                onClick={() => setFilters({ startDate: '', endDate: '', category: '', storageArea: '', type: '', userId: '', productId: '' })}
+                className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full hover:bg-gray-200 transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Report Type Selection Cards */}
         <div className="bg-white/80 backdrop-blur-md rounded-3xl p-8 shadow-xl border border-white/50">
           <h2 className="text-2xl font-bold text-green-800 mb-6">REPORTS</h2>
@@ -1048,57 +1267,112 @@ const Reports = () => {
             })}
           </div>
         </div>
-
-        {/* Report Filters */}
         <div className="bg-white/80 backdrop-blur-md rounded-3xl p-8 shadow-xl border border-white/50">
-          <h3 className="text-xl font-bold text-green-800 mb-4">Report Filters</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <h3 className="text-2xl font-bold text-green-800 mb-2">Report Filters</h3>
+              <p className="text-gray-600">Customize your report data by selecting specific criteria below</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-green-600 font-medium">Active Filters: {Object.values(filters).filter(f => f !== '').length}</span>
+            </div>
+          </div>
+
+          {/* Filter Description */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200 mb-6">
+            <div className="flex items-start space-x-3">
+              <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white text-xs font-bold">i</span>
+              </div>
+              <div>
+                <h4 className="font-semibold text-blue-800 mb-1">How Filters Work</h4>
+                <p className="text-blue-700 text-sm leading-relaxed">
+                  <strong>Inventory Reports:</strong> Show stock levels based on your selected criteria. 
+                  <strong>Transaction Reports:</strong> Show system activities (dispatch, add, update) within your specified filters.
+                  Leave filters empty to include all data.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <CalendarIcon className="w-4 h-4 mr-1 text-green-600" />
+                Start Date
+                {filters.startDate && (
+                  <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                )}
+              </label>
               <input
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterUpdate('startDate', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                placeholder="Select start date"
               />
+              <p className="text-xs text-gray-500 mt-1">Include data from this date onwards</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <CalendarIcon className="w-4 h-4 mr-1 text-green-600" />
+                End Date
+                {filters.endDate && (
+                  <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                )}
+              </label>
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterUpdate('endDate', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                placeholder="Select end date"
               />
+              <p className="text-xs text-gray-500 mt-1">Include data up to this date</p>
             </div>
             
             {selectedReport === 'inventory' && (
               <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <ChartBarIcon className="w-4 h-4 mr-1 text-green-600" />
+                    Category
+                    {filters.category && (
+                      <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                    )}
+                  </label>
                   <select
                     value={filters.category}
                     onChange={(e) => handleFilterUpdate('category', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
                   >
                     <option value="">All Categories</option>
                     {filterOptions.categories.map((category, index) => (
                       <option key={index} value={category}>{category}</option>
                     ))}
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">Filter by product category</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Storage Area</label>
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <CogIcon className="w-4 h-4 mr-1 text-green-600" />
+                    Storage Area
+                    {filters.storageArea && (
+                      <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Set</span>
+                    )}
+                  </label>
                   <select
                     value={filters.storageArea}
                     onChange={(e) => handleFilterUpdate('storageArea', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
                   >
                     <option value="">All Storage Areas</option>
                     {filterOptions.storageAreas.map((area, index) => (
                       <option key={index} value={area}>{area}</option>
                     ))}
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">Filter by storage location</p>
                 </div>
               </>
             )}
@@ -1146,6 +1420,55 @@ const Reports = () => {
                 </div>
               </>
             )}
+          </div>
+
+          {/* Quick Filter Presets */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Presets</h4>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  const today = new Date();
+                  const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                  setFilters({
+                    startDate: lastWeek.toISOString().split('T')[0],
+                    endDate: today.toISOString().split('T')[0],
+                    category: '',
+                    storageArea: '',
+                    type: '',
+                    userId: '',
+                    productId: ''
+                  });
+                }}
+                className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200 transition-colors"
+              >
+                Last 7 Days
+              </button>
+              <button
+                onClick={() => {
+                  const today = new Date();
+                  const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+                  setFilters({
+                    startDate: lastMonth.toISOString().split('T')[0],
+                    endDate: today.toISOString().split('T')[0],
+                    category: '',
+                    storageArea: '',
+                    type: '',
+                    userId: '',
+                    productId: ''
+                  });
+                }}
+                className="px-3 py-1.5 bg-purple-100 text-purple-700 text-xs rounded-full hover:bg-purple-200 transition-colors"
+              >
+                Last 30 Days
+              </button>
+              <button
+                onClick={() => setFilters({ startDate: '', endDate: '', category: '', storageArea: '', type: '', userId: '', productId: '' })}
+                className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded-full hover:bg-gray-200 transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1280,10 +1603,11 @@ const Reports = () => {
                         <DocumentChartBarIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-800 text-lg mb-1">
-                          {report.type === 'inventory' ? 'Inventory Report' : report.type === 'transaction' ? 'Transaction Report' : 'Report'}
-                          {' - '}{new Date(report.generatedAt).toLocaleDateString()}
-                        </h4>
+                                        <h4 className="font-semibold text-gray-800 text-lg mb-1">
+                  {report.type === 'inventory' ? 'Inventory Report' : report.type === 'transaction' ? 'Transaction Report' : 'Report'}
+                  {' - '}{report.generatedAt ? new Date(report.generatedAt).toLocaleString() : 
+                    (report._id ? new Date(parseInt(report._id.toString().substring(0, 8), 16) * 1000).toLocaleString() : 'Date not available')}
+                </h4>
                         <div className="flex items-center space-x-4 text-sm text-gray-600">
                           <span>{report.summary}</span>
                           {report.generatedBy && report.generatedBy.name && (

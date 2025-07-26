@@ -16,19 +16,14 @@ exports.getAllUsers = async (req, res) => {
 exports.register = async (req, res) => {
   try {
     console.log('Full request body:', req.body);
-    const { fullName, email, role, password } = req.body;
+    const { fullName, email, password } = req.body;
     
-    console.log('Registration attempt:', { fullName, email, role, password: password ? '***' : 'undefined' });
+    console.log('Registration attempt:', { fullName, email, password: password ? '***' : 'undefined' });
 
     // Validate required fields
-    if (!fullName || !email || !password || !role) {
-      console.log('Missing required fields:', { fullName: !!fullName, email: !!email, password: !!password, role: !!role });
+    if (!fullName || !email || !password) {
+      console.log('Missing required fields:', { fullName: !!fullName, email: !!email, password: !!password });
       return res.status(400).json({ error: 'All fields are required' });
-    }
-
-    // Validate role
-    if (!['user', 'admin'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role. Must be either "user" or "admin"' });
     }
 
     // Check if user already exists
@@ -44,12 +39,12 @@ exports.register = async (req, res) => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create new user
+    // Create new user with automatic "staff" role
     const user = new User({
       name: fullName,
       email,
       passwordHash,
-      role: role // Use the selected role
+      role: 'staff' // Automatically assign staff role
     });
 
     await user.save();
@@ -110,6 +105,81 @@ exports.login = async (req, res) => {
         role: user.role
       }
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}; 
+
+// Update user
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, role } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !role) {
+      return res.status(400).json({ error: 'Name, email, and role are required' });
+    }
+
+    // Validate role
+    if (!['staff', 'admin'].includes(role.toLowerCase())) {
+      return res.status(400).json({ error: 'Invalid role. Must be either "staff" or "admin"' });
+    }
+
+    // Check if email is already taken by another user
+    const existingUser = await User.findOne({ email, _id: { $ne: id } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email is already taken by another user' });
+    }
+
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { name, email, role: role.toLowerCase() },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      message: 'User updated successfully',
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Delete user
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user exists
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent deleting the last admin user
+    if (user.role === 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin' });
+      if (adminCount <= 1) {
+        return res.status(400).json({ error: 'Cannot delete the last admin user' });
+      }
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(id);
+
+    res.json({ message: 'User deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

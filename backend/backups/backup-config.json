@@ -1,0 +1,7 @@
+{
+  "autoBackup": false,
+  "schedule": "daily",
+  "retention": 30,
+  "lastBackup": null,
+  "totalBackups": 0
+}

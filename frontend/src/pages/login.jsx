@@ -7,7 +7,6 @@ const Login = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    role: 'user',
     password: '',
     confirmPassword: ''
   });
@@ -137,7 +136,7 @@ const Login = ({ onLoginSuccess }) => {
       const endpoint = isLoginMode ? '/api/users/login' : '/api/users/register';
       const requestData = isLoginMode 
         ? { email: formData.email, password: formData.password }
-        : { fullName: formData.fullName, email: formData.email, role: formData.role, password: formData.password };
+        : { fullName: formData.fullName, email: formData.email, password: formData.password };
 
       console.log('Sending request to:', endpoint);
       console.log('Request data:', requestData);
@@ -198,7 +197,6 @@ const Login = ({ onLoginSuccess }) => {
     setFormData({
       fullName: '',
       email: '',
-      role: 'user',
       password: '',
       confirmPassword: ''
     });
@@ -295,26 +293,6 @@ const Login = ({ onLoginSuccess }) => {
                     required
                   />
                 </div>
-
-                {/* Role Selection - Only show in registration mode */}
-                {!isLoginMode && (
-                  <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                      Role
-                    </label>
-                    <select
-                      id="role"
-                      name="role"
-                      value={formData.role}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border-2 border-green-300 rounded-lg focus:outline-none focus:border-green-500 transition-colors duration-200 text-sm bg-white"
-                      required={!isLoginMode}
-                    >
-                      <option value="user">User</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-                )}
 
                 {/* Password */}
                 <div key="password">
