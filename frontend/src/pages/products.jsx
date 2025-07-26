@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, ChevronDownIcon, PlusIcon, XMarkIcon, CheckCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 const CATEGORY_COLORS = {
-  Seeds: 'bg-green-100 text-green-800',
-  Seedlings: 'bg-orange-100 text-orange-800',
-  'HVC (High Value Crops)': 'bg-purple-100 text-purple-800',
+  Rice: 'bg-green-100 text-green-800',
+  Corn: 'bg-orange-100 text-orange-800',
+  HVC: 'bg-purple-100 text-purple-800',
 };
 
 const DEFAULT_IMAGE = 'https://via.placeholder.com/40x40?text=No+Image';
@@ -55,6 +55,8 @@ const Products = () => {
   const [importResult, setImportResult] = useState(null);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -134,9 +136,9 @@ const Products = () => {
 
   const categoryOptions = [
     { value: 'all', label: 'All Categories' },
-    { value: 'Seeds', label: 'Seeds' },
-    { value: 'Seedlings', label: 'Seedlings' },
-    { value: 'HVC (High Value Crops)', label: 'HVC (High Value Crops)' }
+    { value: 'Rice', label: 'Rice' },
+    { value: 'Corn', label: 'Corn' },
+    { value: 'HVC', label: 'HVC' }
   ];
 
   const handleSort = (field) => {
@@ -293,8 +295,10 @@ const Products = () => {
         body: formData
       });
 
+      const result = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to create product');
+        throw new Error(result.error || 'Failed to create product');
       }
 
       // Refresh products
@@ -321,13 +325,19 @@ const Products = () => {
       setSelectedImage(null);
       setImagePreview('');
 
-      // Show success toast
-      setSuccessMessage(`Successfully added ${addFormData.name}`);
+      // Show success toast with appropriate message
+      const action = result.action === 'updated' ? 'updated' : 'added';
+      setSuccessMessage(`Successfully ${action} ${addFormData.name}`);
       setShowSuccessToast(true);
       setTimeout(() => setShowSuccessToast(false), 4000);
 
     } catch (err) {
-      alert('Error creating product: ' + err.message);
+      // Show error message in a custom modal
+      const message = err.message.includes('already exists') 
+        ? err.message 
+        : 'Error creating product: ' + err.message;
+      setErrorMessage(message);
+      setShowErrorModal(true);
     } finally {
       setAddLoading(false);
     }
@@ -379,7 +389,8 @@ const Products = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update product');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update product');
       }
 
       // Refresh products
@@ -413,7 +424,9 @@ const Products = () => {
       setTimeout(() => setShowSuccessToast(false), 4000);
 
     } catch (err) {
-      alert('Error updating product: ' + err.message);
+      // Show error message in a custom modal
+      setErrorMessage('Error updating product: ' + err.message);
+      setShowErrorModal(true);
     } finally {
       setEditLoading(false);
     }
@@ -925,9 +938,9 @@ const Products = () => {
                     required
                   >
                     <option value="">Select category...</option>
-                    <option value="Seeds">Seeds</option>
-                    <option value="Seedlings">Seedlings</option>
-                    <option value="HVC (High Value Crops)">HVC (High Value Crops)</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Corn">Corn</option>
+                    <option value="HVC">HVC</option>
                   </select>
                 </div>
 
@@ -1090,9 +1103,9 @@ const Products = () => {
                     required
                   >
                     <option value="">Select category...</option>
-                    <option value="Seeds">Seeds</option>
-                    <option value="Seedlings">Seedlings</option>
-                    <option value="HVC (High Value Crops)">HVC (High Value Crops)</option>
+                    <option value="Rice">Rice</option>
+                    <option value="Corn">Corn</option>
+                    <option value="HVC">HVC</option>
                   </select>
                 </div>
 
@@ -1217,7 +1230,36 @@ const Products = () => {
             <div className="mt-4 text-xs text-gray-500">
               <div>Accepted columns: <b>name, category, quantity, storageArea, imageUrl</b></div>
               <div>File types: .csv, .xlsx, .xls</div>
-              <div>Existing products (same name, category, storageArea) will have their quantity increased.</div>
+              <div>Existing products (same name) will have their quantity increased, category and storage area updated.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <svg className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">Error</h3>
+              </div>
+            </div>
+            <div className="mb-6">
+              <p className="text-sm text-gray-600">{errorMessage}</p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+              >
+                OK
+              </button>
             </div>
           </div>
         </div>

@@ -17,23 +17,23 @@ const CategoryTrendsChart = ({ dashboardStats }) => {
       // Create a data point for each day
       const dataPoint = {
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        Seeds: 0,
-        Seedlings: 0,
-        'HVC (High Value Crops)': 0
+        Rice: 0,
+        Corn: 0,
+        HVC: 0
       };
       
       // For now, we'll simulate some trend data
       // In a real implementation, you'd get this from historical transaction data
-      const baseSeeds = 450;
-      const baseSeedlings = 950;
+      const baseRice = 450;
+      const baseCorn = 950;
       const baseHVC = 200;
       
       // Add some variation to simulate trends
       const variation = Math.sin(i * 0.5) * 0.2; // Creates a wave pattern
       
-      dataPoint.Seeds = Math.round(baseSeeds * (1 + variation));
-      dataPoint.Seedlings = Math.round(baseSeedlings * (1 + variation * 0.5));
-      dataPoint['HVC (High Value Crops)'] = Math.round(baseHVC * (1 + variation * 0.3));
+      dataPoint.Rice = Math.round(baseRice * (1 + variation));
+      dataPoint.Corn = Math.round(baseCorn * (1 + variation * 0.5));
+      dataPoint.HVC = Math.round(baseHVC * (1 + variation * 0.3));
       
       data.push(dataPoint);
     }
@@ -79,7 +79,7 @@ const CategoryTrendsChart = ({ dashboardStats }) => {
             />
             <Line 
               type="monotone" 
-              dataKey="Seeds" 
+              dataKey="Rice" 
               stroke="#10B981" 
               strokeWidth={3} 
               dot={{ r: 4, fill: '#10B981' }}
@@ -87,7 +87,7 @@ const CategoryTrendsChart = ({ dashboardStats }) => {
             />
             <Line 
               type="monotone" 
-              dataKey="Seedlings" 
+              dataKey="Corn" 
               stroke="#F59E0B" 
               strokeWidth={3} 
               dot={{ r: 4, fill: '#F59E0B' }}
@@ -95,7 +95,7 @@ const CategoryTrendsChart = ({ dashboardStats }) => {
             />
             <Line 
               type="monotone" 
-              dataKey="HVC (High Value Crops)" 
+              dataKey="HVC" 
               stroke="#8B5CF6" 
               strokeWidth={3} 
               dot={{ r: 4, fill: '#8B5CF6' }}

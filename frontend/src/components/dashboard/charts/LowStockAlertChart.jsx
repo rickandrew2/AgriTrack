@@ -14,7 +14,7 @@ const LowStockAlertChart = ({ dashboardStats }) => {
     
     // Use actual product stock levels instead of transaction data
     const lowStockProducts = dashboardStats.allProducts
-      .filter(product => product.quantity < 10) // Low stock threshold
+      .filter(product => product.quantity < 15) // Low stock threshold
       .map(product => ({
         name: product.name,
         quantity: product.quantity,

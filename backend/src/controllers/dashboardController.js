@@ -9,9 +9,9 @@ const getDashboardStats = async (req, res) => {
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     // Get current stats
-    const totalSeeds = await Product.countDocuments({ category: 'Seeds' });
-    const totalSeedlings = await Product.countDocuments({ category: 'Seedlings' });
-    const totalHVC = await Product.countDocuments({ category: 'HVC (High Value Crops)' });
+    const totalRice = await Product.countDocuments({ category: 'Rice' });
+    const totalCorn = await Product.countDocuments({ category: 'Corn' });
+    const totalHVC = await Product.countDocuments({ category: 'HVC' });
     
     // Get total dispatch items (sum of quantities from dispatch transactions)
     const dispatchResult = await Transaction.aggregate([
@@ -24,6 +24,18 @@ const getDashboardStats = async (req, res) => {
       }
     ]);
     const totalDispatchItems = dispatchResult.length > 0 ? dispatchResult[0].totalDispatchItems : 0;
+    
+    // Get total added items (sum of quantities from add transactions)
+    const addResult = await Transaction.aggregate([
+      { $match: { type: 'add' } },
+      {
+        $group: {
+          _id: null,
+          totalAddedItems: { $sum: '$quantity' }
+        }
+      }
+    ]);
+    const totalAddedItems = addResult.length > 0 ? addResult[0].totalAddedItems : 0;
     
     // Get remaining stock (sum of all product quantities)
     const remainingStockResult = await Product.aggregate([
@@ -53,6 +65,23 @@ const getDashboardStats = async (req, res) => {
       }
     ]);
     const yesterdayDispatchItems = yesterdayDispatchResult.length > 0 ? yesterdayDispatchResult[0].totalDispatchItems : 0;
+    
+    // For added items - compare with yesterday's total
+    const yesterdayAddResult = await Transaction.aggregate([
+      { 
+        $match: { 
+          type: 'add',
+          timestamp: { $lt: yesterday }
+        } 
+      },
+      {
+        $group: {
+          _id: null,
+          totalAddedItems: { $sum: '$quantity' }
+        }
+      }
+    ]);
+    const yesterdayAddedItems = yesterdayAddResult.length > 0 ? yesterdayAddResult[0].totalAddedItems : 0;
 
     // For remaining stock - compare with yesterday's total
     const yesterdayStockResult = await Product.aggregate([
@@ -69,30 +98,30 @@ const getDashboardStats = async (req, res) => {
     const yesterdayRemainingStock = yesterdayStockResult.length > 0 ? yesterdayStockResult[0].remainingStock : 0;
 
     // For product counts - check if there were any new products added recently
-    const recentSeeds = await Product.countDocuments({ 
-      category: 'Seeds',
+    const recentRice = await Product.countDocuments({ 
+      category: 'Rice',
       createdAt: { $gte: yesterday }
     });
-    const recentSeedlings = await Product.countDocuments({ 
-      category: 'Seedlings',
+    const recentCorn = await Product.countDocuments({ 
+      category: 'Corn',
       createdAt: { $gte: yesterday }
     });
     const recentHVC = await Product.countDocuments({ 
-      category: 'HVC (High Value Crops)',
+      category: 'HVC',
       createdAt: { $gte: yesterday }
     });
 
     // Get yesterday's product counts for proper comparison
-    const yesterdaySeeds = await Product.countDocuments({ 
-      category: 'Seeds',
+    const yesterdayRice = await Product.countDocuments({ 
+      category: 'Rice',
       createdAt: { $lt: yesterday }
     });
-    const yesterdaySeedlings = await Product.countDocuments({ 
-      category: 'Seedlings',
+    const yesterdayCorn = await Product.countDocuments({ 
+      category: 'Corn',
       createdAt: { $lt: yesterday }
     });
     const yesterdayHVC = await Product.countDocuments({ 
-      category: 'HVC (High Value Crops)',
+      category: 'HVC',
       createdAt: { $lt: yesterday }
     });
 
@@ -137,13 +166,13 @@ const getDashboardStats = async (req, res) => {
     console.log('Backend - allProducts sample:', allProducts.slice(0, 2));
     
     const stats = {
-      totalSeeds: {
-        value: totalSeeds,
-        change: calculatePercentageChange(totalSeeds, yesterdaySeeds, recentSeeds > 0 ? 1 : 0)
+      totalRice: {
+        value: totalRice,
+        change: calculatePercentageChange(totalRice, yesterdayRice, recentRice > 0 ? 1 : 0)
       },
-      totalSeedlings: {
-        value: totalSeedlings,
-        change: calculatePercentageChange(totalSeedlings, yesterdaySeedlings, recentSeedlings > 0 ? 1 : 0)
+      totalCorn: {
+        value: totalCorn,
+        change: calculatePercentageChange(totalCorn, yesterdayCorn, recentCorn > 0 ? 1 : 0)
       },
       totalHVC: {
         value: totalHVC,
@@ -153,22 +182,26 @@ const getDashboardStats = async (req, res) => {
         value: totalDispatchItems,
         change: calculatePercentageChange(totalDispatchItems, yesterdayDispatchItems)
       },
+      totalAddedItems: {
+        value: totalAddedItems,
+        change: calculatePercentageChange(totalAddedItems, yesterdayAddedItems)
+      },
       remainingStock: {
         value: remainingStock,
         change: (() => {
-          // For remaining stock, we want to show actual decrease/increase
-          if (yesterdayRemainingStock === 0 && remainingStock > 0) {
-            return '+100%';
-          }
-          if (yesterdayRemainingStock === 0 && remainingStock === 0) {
+          // Calculate net change based on recent adds vs dispatches
+          const netChange = totalAddedItems - totalDispatchItems;
+          
+          if (netChange > 0) {
+            // More items added than dispatched
+            return `+${Math.round((netChange / remainingStock) * 100)}%`;
+          } else if (netChange < 0) {
+            // More items dispatched than added
+            return `${Math.round((netChange / remainingStock) * 100)}%`;
+          } else {
+            // No net change
             return '+0%';
           }
-          if (yesterdayRemainingStock > 0) {
-            const change = ((remainingStock - yesterdayRemainingStock) / yesterdayRemainingStock) * 100;
-            const sign = change >= 0 ? '+' : '';
-            return `${sign}${Math.round(change)}%`;
-          }
-          return '+0%';
         })()
       },
       recentTransactions,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DocumentChartBarIcon } from '@heroicons/react/24/outline';
+import { DocumentChartBarIcon, BeakerIcon, CubeIcon, TruckIcon, ArchiveBoxIcon, StarIcon, PlusIcon } from '@heroicons/react/24/outline';
 import ChartsSection from '../components/dashboard/ChartsSection';
 
 const Dashboard = () => {
@@ -62,30 +62,59 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Function to determine change badge color
+  const getChangeColor = (change) => {
+    if (change.startsWith('-')) {
+      return 'text-red-600 bg-red-100';
+    } else if (change.startsWith('+') && change !== '+0%') {
+      return 'text-green-600 bg-green-100';
+    } else {
+      return 'text-gray-600 bg-gray-100';
+    }
+  };
+
   const statCards = [
     { 
-      title: 'Total Seeds', 
-      value: dashboardStats?.totalSeeds?.value ? dashboardStats.totalSeeds.value.toLocaleString() : '0', 
-      change: dashboardStats?.totalSeeds?.change || '+0%', 
-      color: 'bg-emerald-500' 
+      title: 'Total Rice', 
+      value: dashboardStats?.totalRice?.value ? dashboardStats.totalRice.value.toLocaleString() : '0', 
+      change: dashboardStats?.totalRice?.change || '+0%', 
+      color: 'bg-emerald-500',
+      icon: StarIcon
     },
     { 
-      title: 'Total Seedlings', 
-      value: dashboardStats?.totalSeedlings?.value ? dashboardStats.totalSeedlings.value.toLocaleString() : '0', 
-      change: dashboardStats?.totalSeedlings?.change || '+0%', 
-      color: 'bg-amber-500' 
+      title: 'Total Corn', 
+      value: dashboardStats?.totalCorn?.value ? dashboardStats.totalCorn.value.toLocaleString() : '0', 
+      change: dashboardStats?.totalCorn?.change || '+0%', 
+      color: 'bg-amber-500',
+      icon: StarIcon
+    },
+    { 
+      title: 'Total HVC', 
+      value: dashboardStats?.totalHVC?.value ? dashboardStats.totalHVC.value.toLocaleString() : '0', 
+      change: dashboardStats?.totalHVC?.change || '+0%', 
+      color: 'bg-purple-500',
+      icon: StarIcon
+    },
+    { 
+      title: 'Total Added Items', 
+      value: dashboardStats?.totalAddedItems?.value ? dashboardStats.totalAddedItems.value.toLocaleString() : '0', 
+      change: dashboardStats?.totalAddedItems?.change || '+0%', 
+      color: 'bg-green-500',
+      icon: PlusIcon
     },
     { 
       title: 'Total Dispatch Items', 
       value: dashboardStats?.totalDispatchItems?.value ? dashboardStats.totalDispatchItems.value.toLocaleString() : '0', 
       change: dashboardStats?.totalDispatchItems?.change || '+0%', 
-      color: 'bg-blue-500' 
+      color: 'bg-blue-500',
+      icon: TruckIcon
     },
     { 
       title: 'Remaining Stock', 
       value: dashboardStats?.remainingStock?.value ? dashboardStats.remainingStock.value.toLocaleString() : '0', 
       change: dashboardStats?.remainingStock?.change || '+0%', 
-      color: 'bg-purple-500' 
+      color: 'bg-indigo-500',
+      icon: ArchiveBoxIcon
     },
   ];
 
@@ -106,8 +135,8 @@ const Dashboard = () => {
       <div className="mb-8">
         <h3 className="text-xl font-semibold text-green-800 mb-4">Overview</h3>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((index) => (
               <div
                 key={index}
                 className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50 animate-pulse"
@@ -126,24 +155,48 @@ const Dashboard = () => {
             <p className="text-red-600 font-medium">Error loading dashboard data: {error}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {statCards.map((card, index) => (
-              <div
-                key={index}
-                className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50 hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-12 h-12 ${card.color} rounded-xl shadow-lg flex items-center justify-center`}>
-                    <div className="w-6 h-6 bg-white rounded-md"></div>
+          <div className="space-y-6">
+            {/* Top row - 3 cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {statCards.slice(0, 3).map((card, index) => (
+                <div
+                  key={index}
+                  className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50 hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-12 h-12 ${card.color} rounded-xl shadow-lg flex items-center justify-center`}>
+                      <card.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${getChangeColor(card.change)}`}>
+                      {card.change}
+                    </span>
                   </div>
-                  <span className="text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                    {card.change}
-                  </span>
+                  <h4 className="text-gray-600 text-sm font-medium mb-1">{card.title}</h4>
+                  <p className="text-2xl font-bold text-gray-800">{card.value}</p>
                 </div>
-                <h4 className="text-gray-600 text-sm font-medium mb-1">{card.title}</h4>
-                <p className="text-2xl font-bold text-gray-800">{card.value}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+            
+            {/* Bottom row - 3 cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {statCards.slice(3, 6).map((card, index) => (
+                <div
+                  key={index + 3}
+                  className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50 hover:shadow-2xl hover:scale-105 transition-all duration-300 group"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-12 h-12 ${card.color} rounded-xl shadow-lg flex items-center justify-center`}>
+                      <card.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${getChangeColor(card.change)}`}>
+                      {card.change}
+                    </span>
+                  </div>
+                  <h4 className="text-gray-600 text-sm font-medium mb-1">{card.title}</h4>
+                  <p className="text-2xl font-bold text-gray-800">{card.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

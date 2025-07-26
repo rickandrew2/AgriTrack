@@ -49,49 +49,68 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ error: 'Name, category, quantity, and storage area are required' });
     }
 
-    // Handle image upload if file exists
-    if (req.file) {
-      try {
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: 'agritrack-products',
-          use_filename: true,
-          unique_filename: true
-        });
-
-        imageUrl = result.secure_url;
-
-        // Delete the temporary file
+    // Check if product already exists (by name only)
+    const existingProduct = await Product.findOne({ name });
+    
+    if (existingProduct) {
+      // Clean up file if it exists
+      if (req.file && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
-      } catch (uploadError) {
-        console.error('Cloudinary upload error:', uploadError);
-        // Delete the temporary file if it exists
-        if (req.file && fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(500).json({ error: 'Failed to upload image' });
       }
+      
+      return res.status(400).json({ 
+        error: `Product with name "${name}" already exists. Please use a different name or update the existing product.` 
+      });
     }
-    
-    const product = new Product({
-      name,
-      category,
-      quantity,
-      storageArea,
-      imageUrl
-    });
 
-    await product.save();
-    
-    // Log the activity
-    await logProductActivity(
-      req.user,
-      'add_product',
-      product,
-      `Added product: ${product.name} (Quantity: ${product.quantity})`
-    );
-    
-    res.status(201).json(product);
+    // Create new product
+      // Handle image upload if file exists
+      if (req.file) {
+        try {
+          // Upload to Cloudinary
+          const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'agritrack-products',
+            use_filename: true,
+            unique_filename: true
+          });
+
+          imageUrl = result.secure_url;
+
+          // Delete the temporary file
+          fs.unlinkSync(req.file.path);
+        } catch (uploadError) {
+          console.error('Cloudinary upload error:', uploadError);
+          // Delete the temporary file if it exists
+          if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+          return res.status(500).json({ error: 'Failed to upload image' });
+        }
+      }
+      
+      const product = new Product({
+        name,
+        category,
+        quantity,
+        storageArea,
+        imageUrl
+      });
+
+      await product.save();
+      
+      // Log the activity
+      await logProductActivity(
+        req.user,
+        'add_product',
+        product,
+        `Added product: ${product.name} (Quantity: ${product.quantity})`
+      );
+      
+      res.status(201).json({ 
+        product, 
+        message: 'Product added successfully',
+        action: 'added'
+      });
   } catch (err) {
     // Clean up file if it exists
     if (req.file && fs.existsSync(req.file.path)) {
@@ -126,6 +145,27 @@ exports.updateProduct = async (req, res) => {
     // Validate required fields
     if (!name || !category || !quantity || !storageArea) {
       return res.status(400).json({ error: 'Name, category, quantity, and storage area are required' });
+    }
+
+    // Check if product name already exists (excluding the current product being updated)
+    console.log('Checking for duplicate name:', name, 'excluding product ID:', req.params.id);
+    const existingProduct = await Product.findOne({ 
+      name: name,
+      _id: { $ne: req.params.id } // Exclude the current product from the check
+    });
+    
+    console.log('Existing product found:', existingProduct);
+    
+    if (existingProduct) {
+      // Clean up file if it exists
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      console.log('Duplicate name detected, rejecting update');
+      return res.status(400).json({ 
+        error: `Product with name "${name}" already exists. Please use a different name.` 
+      });
     }
 
     // Handle image upload if file exists
@@ -271,14 +311,18 @@ exports.importProducts = async (req, res) => {
         errors.push({ row, error: 'Missing required fields' });
         continue;
       }
-      // Check if product exists (by name, category, storageArea)
-      const existing = await Product.findOne({ name, category, storageArea });
+      // Check if product exists (by name only)
+      const existing = await Product.findOne({ name });
       if (existing) {
+        // Update existing product
         existing.quantity += quantity;
+        existing.category = category; // Update category
+        existing.storageArea = storageArea; // Update storage area
         if (imageUrl) existing.imageUrl = imageUrl;
         await existing.save();
         updated++;
       } else {
+        // Create new product
         const newProduct = new Product({ name, category, quantity, storageArea, imageUrl });
         await newProduct.save();
         added++;

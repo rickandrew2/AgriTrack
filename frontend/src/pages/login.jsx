@@ -30,6 +30,14 @@ const Login = ({ onLoginSuccess }) => {
     }
   }, [navigate]);
 
+  // Reset reCAPTCHA when mode changes
+  React.useEffect(() => {
+    setRecaptchaValue(null);
+    if (recaptchaRef.current) {
+      recaptchaRef.current.reset();
+    }
+  }, [isLoginMode]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -180,7 +188,6 @@ const Login = ({ onLoginSuccess }) => {
             password: '',
             confirmPassword: ''
           });
-          setRecaptchaValue(null);
         }, 2000);
       }
       
@@ -200,11 +207,6 @@ const Login = ({ onLoginSuccess }) => {
       password: '',
       confirmPassword: ''
     });
-    // Reset reCAPTCHA when switching modes
-    setRecaptchaValue(null);
-    if (recaptchaRef.current) {
-      recaptchaRef.current.reset();
-    }
     setError('');
     setSuccess('');
     setPasswordStrength({ score: 0, message: '' });
@@ -428,6 +430,7 @@ const Login = ({ onLoginSuccess }) => {
                                 {/* CAPTCHA - Show in both login and registration modes */}
                 <div className="bg-gray-50 p-1 rounded-lg border border-gray-200 flex justify-center">
                   <ReCAPTCHA
+                    key={isLoginMode ? 'login' : 'register'}
                     ref={recaptchaRef}
                     sitekey="6Lf2W48rAAAAAL_p6dthIe0GtcXJkU3zUjRxBUyX"
                     onChange={handleRecaptchaChange}
