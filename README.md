@@ -30,25 +30,35 @@ A comprehensive inventory management system designed specifically for agricultur
    cd AgriTrack
    ```
 
-2. **Backend Setup**
+2. **Install All Dependencies**
    ```bash
+   npm run install:all
+   ```
+
+3. **Environment Setup**
+   ```bash
+   # Backend environment
    cd backend
-   npm install
    cp env.example .env
    # Edit .env with your configuration
-   npm run dev
-   ```
-
-3. **Frontend Setup**
-   ```bash
-   cd frontend
-   npm install
+   
+   # Frontend environment
+   cd ../frontend
    cp env.example .env.local
    # Edit .env.local with your API URL
-   npm run dev
    ```
 
-4. **Access the application**
+4. **Start Development Servers**
+   ```bash
+   # From root directory - starts both frontend and backend
+   npm run dev
+   
+   # Or start individually:
+   # Backend: cd backend && npm run dev
+   # Frontend: cd frontend && npm run dev
+   ```
+
+5. **Access the application**
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:5000
 
