@@ -6,7 +6,9 @@ const transactionSchema = new mongoose.Schema({
   quantity: { type: Number, required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   timestamp: { type: Date, default: Date.now },
-  remarks: { type: String }
+  remarks: { type: String },
+  productName: { type: String }, // Store product name for deleted products
+  productCategory: { type: String } // Store product category for deleted products
 });
 
 module.exports = mongoose.model('Transaction', transactionSchema); 

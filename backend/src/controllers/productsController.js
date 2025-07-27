@@ -259,17 +259,19 @@ exports.deleteProduct = async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    // Create a transaction record for the product deletion
+    // Create a transaction record for the product deletion BEFORE deleting the product
     const transaction = new Transaction({
       productId: product._id,
       type: 'delete', // Using delete type for complete product removal
       quantity: product.quantity,
       userId: req.user.id,
-      remarks: `Product deletion: ${product.name} - Completely removed ${product.quantity} units from inventory`
+      remarks: `Product deletion: ${product.name} - Completely removed ${product.quantity} units from inventory`,
+      productName: product.name, // Store the product name directly
+      productCategory: product.category // Store the category too
     });
     await transaction.save();
 
-    // Now delete the product
+    // Now delete the product AFTER creating the transaction
     await Product.findByIdAndDelete(req.params.id);
 
     console.log('Product deleted successfully:', product);
