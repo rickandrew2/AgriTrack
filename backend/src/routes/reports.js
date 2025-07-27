@@ -18,4 +18,7 @@ router.get('/filter-options', reportsController.getReportFilterOptions);
 // Fetch recent reports
 router.get('/recent', reportsController.getRecentReports);
 
+// Get specific report by ID
+router.get('/:id', reportsController.getReportById);
+
 module.exports = router; 

@@ -345,4 +345,167 @@ exports.getRecentReports = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+};
+
+// Get specific report by ID
+exports.getReportById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find the report
+    const report = await Report.findById(id).populate('generatedBy', 'name email');
+    
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    // Reconstruct the report data based on the report type and filters
+    let reportData = {
+      generatedAt: report.generatedAt,
+      filters: report.filters,
+      generatedBy: report.generatedBy,
+      type: report.type
+    };
+
+    if (report.type === 'inventory') {
+      // Reconstruct inventory report data
+      const { startDate, endDate, category, storageArea } = report.filters || {};
+      
+      let filter = {};
+      if (startDate && endDate) {
+        filter.createdAt = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        };
+      }
+      if (category) filter.category = category;
+      if (storageArea) filter.storageArea = storageArea;
+
+      const products = await Product.find(filter).sort({ category: 1, name: 1 });
+      
+      const totalProducts = products.length;
+      const totalQuantity = products.reduce((sum, product) => sum + product.quantity, 0);
+      const lowStockProducts = products.filter(product => product.quantity < 10);
+      const outOfStockProducts = products.filter(product => product.quantity === 0);
+
+      // Group by category
+      const categoryStats = {};
+      products.forEach(product => {
+        if (!categoryStats[product.category]) {
+          categoryStats[product.category] = {
+            count: 0,
+            totalQuantity: 0,
+            products: []
+          };
+        }
+        categoryStats[product.category].count++;
+        categoryStats[product.category].totalQuantity += product.quantity;
+        categoryStats[product.category].products.push(product);
+      });
+
+      // Group by storage area
+      const storageStats = {};
+      products.forEach(product => {
+        if (!storageStats[product.storageArea]) {
+          storageStats[product.storageArea] = {
+            count: 0,
+            totalQuantity: 0,
+            products: []
+          };
+        }
+        storageStats[product.storageArea].count++;
+        storageStats[product.storageArea].totalQuantity += product.quantity;
+        storageStats[product.storageArea].products.push(product);
+      });
+
+      reportData = {
+        ...reportData,
+        summary: {
+          totalProducts,
+          totalQuantity,
+          lowStockCount: lowStockProducts.length,
+          outOfStockCount: outOfStockProducts.length,
+          categories: Object.keys(categoryStats).length,
+          storageAreas: Object.keys(storageStats).length
+        },
+        lowStockProducts,
+        outOfStockProducts,
+        categoryStats,
+        storageStats,
+        allProducts: products
+      };
+    } else if (report.type === 'transaction') {
+      // Reconstruct transaction report data
+      const { startDate, endDate, type, userId, productId } = report.filters || {};
+      
+      let filter = {};
+      if (startDate && endDate) {
+        filter.timestamp = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        };
+      }
+      if (type) filter.type = type;
+      if (userId) filter.userId = userId;
+      if (productId) filter.productId = productId;
+
+      const transactions = await Transaction.find(filter)
+        .populate('productId', 'name category storageArea')
+        .populate('userId', 'name email')
+        .sort({ timestamp: -1 });
+
+      const validTransactions = transactions.filter(
+        t => t && t.userId && t.userId._id && t.productId && t.productId._id
+      );
+
+      const totalTransactions = validTransactions.length;
+      const dispatchTransactions = validTransactions.filter(t => t.type === 'dispatch');
+      const addTransactions = validTransactions.filter(t => t.type === 'add');
+      const updateTransactions = validTransactions.filter(t => t.type === 'update');
+
+      const totalDispatchQuantity = dispatchTransactions.reduce((sum, t) => sum + t.quantity, 0);
+      const totalAddQuantity = addTransactions.reduce((sum, t) => sum + t.quantity, 0);
+      const totalUpdateQuantity = updateTransactions.reduce((sum, t) => sum + t.quantity, 0);
+
+      // Group by user
+      const userStats = {};
+      validTransactions.forEach(transaction => {
+        const userId = transaction.userId._id.toString();
+        if (!userStats[userId]) {
+          userStats[userId] = {
+            user: transaction.userId,
+            total: 0,
+            dispatch: 0,
+            add: 0,
+            update: 0,
+            transactions: []
+          };
+        }
+        userStats[userId].total++;
+        userStats[userId][transaction.type]++;
+        userStats[userId].transactions.push(transaction);
+      });
+
+      reportData = {
+        ...reportData,
+        summary: {
+          totalTransactions,
+          dispatchCount: dispatchTransactions.length,
+          addCount: addTransactions.length,
+          updateCount: updateTransactions.length,
+          totalDispatchQuantity,
+          totalAddQuantity,
+          totalUpdateQuantity,
+          uniqueUsers: Object.keys(userStats).length
+        },
+        userStats: Object.values(userStats),
+        allTransactions: validTransactions
+      };
+    }
+
+    res.json(reportData);
+  } catch (err) {
+    console.error('Error fetching report by ID:', err);
+    res.status(500).json({ error: err.message });
+  }
 }; 

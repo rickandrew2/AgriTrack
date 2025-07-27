@@ -17,6 +17,9 @@ const Reports = () => {
   const [exportingPDF, setExportingPDF] = useState(false);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const [pdfData, setPdfData] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedReportData, setSelectedReportData] = useState(null);
+  const [loadingReport, setLoadingReport] = useState(false);
   const [filterOptions, setFilterOptions] = useState({
     categories: [],
     storageAreas: [],
@@ -607,6 +610,37 @@ const Reports = () => {
       URL.revokeObjectURL(pdfData.url);
     }
     setPdfData(null);
+  };
+
+  // Fetch and display a specific report
+  const viewReport = async (reportId) => {
+    setLoadingReport(true);
+    try {
+      const response = await fetch(buildApiUrl(`/reports/${reportId}`), {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedReportData(data);
+        setShowReportModal(true);
+      } else {
+        alert('Failed to load report');
+      }
+    } catch (error) {
+      console.error('Error fetching report:', error);
+      alert('Error loading report');
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
+  // Close report modal
+  const closeReportModal = () => {
+    setShowReportModal(false);
+    setSelectedReportData(null);
   };
 
   const renderInventoryReport = () => {
@@ -1393,18 +1427,19 @@ const Reports = () => {
                 {currentReports.map((report) => (
                   <div
                     key={report._id}
-                    className="group flex items-center justify-between p-6 border border-gray-200 rounded-2xl hover:bg-gradient-to-r hover:from-green-50 hover:to-white transition-all duration-300 hover:shadow-lg hover:border-green-200"
+                    onClick={() => viewReport(report._id)}
+                    className="group flex items-center justify-between p-6 border border-gray-200 rounded-2xl hover:bg-gradient-to-r hover:from-green-50 hover:to-white transition-all duration-300 hover:shadow-lg hover:border-green-200 cursor-pointer"
                   >
                     <div className="flex items-center space-x-6">
                       <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                         <DocumentChartBarIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                                        <h4 className="font-semibold text-gray-800 text-lg mb-1">
-                  {report.type === 'inventory' ? 'Inventory Report' : report.type === 'transaction' ? 'Transaction Report' : 'Report'}
-                  {' - '}{report.generatedAt ? new Date(report.generatedAt).toLocaleString() : 
-                    (report._id ? new Date(parseInt(report._id.toString().substring(0, 8), 16) * 1000).toLocaleString() : 'Date not available')}
-                </h4>
+                        <h4 className="font-semibold text-gray-800 text-lg mb-1">
+                          {report.type === 'inventory' ? 'Inventory Report' : report.type === 'transaction' ? 'Transaction Report' : 'Report'}
+                          {' - '}{report.generatedAt ? new Date(report.generatedAt).toLocaleString() : 
+                            (report._id ? new Date(parseInt(report._id.toString().substring(0, 8), 16) * 1000).toLocaleString() : 'Date not available')}
+                        </h4>
                         <div className="flex items-center space-x-4 text-sm text-gray-600">
                           <span>{report.summary}</span>
                           {report.generatedBy && report.generatedBy.name && (
@@ -1420,6 +1455,11 @@ const Reports = () => {
                       <span className="px-4 py-2 rounded-full text-sm font-medium border bg-green-100 text-green-800 border-green-200">
                         {report.type === 'inventory' ? 'Inventory' : report.type === 'transaction' ? 'Transaction' : 'Other'}
                       </span>
+                      <div className="text-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1471,6 +1511,65 @@ const Reports = () => {
           )}
         </div>
       </div>
+
+      {/* Report Details Modal */}
+      {showReportModal && selectedReportData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2">
+          <div className="bg-white rounded-xl shadow-2xl w-full h-full max-w-7xl max-h-[95vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+              <h3 className="text-xl font-semibold text-gray-800">
+                {selectedReportData.type === 'inventory' ? 'Inventory Report' : 'Transaction Report'} - {new Date(selectedReportData.generatedAt).toLocaleString()}
+              </h3>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={closeReportModal}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            {/* Report Content */}
+            <div className="flex-1 p-6 overflow-y-auto">
+              {loadingReport ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-200 border-t-green-600"></div>
+                    <p className="text-gray-600">Loading report...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Report Info */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">Generated:</span>
+                        <p className="text-gray-600">{new Date(selectedReportData.generatedAt).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Generated By:</span>
+                        <p className="text-gray-600">{selectedReportData.generatedBy?.name || 'Unknown'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Report Type:</span>
+                        <p className="text-gray-600 capitalize">{selectedReportData.type}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Report Content */}
+                  {selectedReportData.type === 'inventory' ? renderInventoryReport() : renderTransactionReport()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PDF Preview Modal */}
       {showPDFPreview && pdfData && (
