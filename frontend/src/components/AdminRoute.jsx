@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 const AdminRoute = ({ children }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
+
+  // Memoize the admin check to prevent unnecessary re-renders
+  const isAdmin = useMemo(() => {
+    return user && user.role && user.role.toLowerCase() === 'admin';
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -21,7 +26,7 @@ const AdminRoute = ({ children }) => {
   }
 
   // Check if user is admin
-  if (!user || user.role.toLowerCase() !== 'admin') {
+  if (!isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 

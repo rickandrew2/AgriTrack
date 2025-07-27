@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SideNavigation from './SideNavigation';
 import Dashboard from '../pages/dashboard';
@@ -6,6 +6,7 @@ import Products from '../pages/products';
 import Reports from '../pages/reports';
 import History from '../pages/history';
 import UserManagement from '../pages/usermanagement';
+import InactivityTimer from './InactivityTimer';
 
 const Layout = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -46,26 +47,33 @@ const Layout = ({ onLogout }) => {
   // Set active tab based on current URL
   useEffect(() => {
     const path = location.pathname;
+    let newTab = 'dashboard';
+    
     switch (path) {
       case '/dashboard':
-        setActiveTab('dashboard');
+        newTab = 'dashboard';
         break;
       case '/products':
-        setActiveTab('product');
+        newTab = 'product';
         break;
       case '/reports':
-        setActiveTab('report');
+        newTab = 'report';
         break;
       case '/history':
-        setActiveTab('history');
+        newTab = 'history';
         break;
       case '/usermanagement':
-        setActiveTab('usermanagement');
+        newTab = 'usermanagement';
         break;
       default:
-        setActiveTab('dashboard');
+        newTab = 'dashboard';
     }
-  }, [location.pathname]);
+    
+    // Only update if the tab actually changed to prevent unnecessary re-renders
+    if (activeTab !== newTab) {
+      setActiveTab(newTab);
+    }
+  }, [location.pathname, activeTab]);
 
   const handleLogoutClick = () => {
     setShowLogoutModal(true);
@@ -108,7 +116,7 @@ const Layout = ({ onLogout }) => {
     }
   };
 
-  const renderContent = () => {
+  const renderContent = useCallback(() => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
@@ -123,10 +131,13 @@ const Layout = ({ onLogout }) => {
       default:
         return <Dashboard />;
     }
-  };
+  }, [activeTab]);
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Inactivity Timer */}
+      <InactivityTimer />
+      
       {/* Side Navigation */}
       <SideNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
