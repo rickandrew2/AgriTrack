@@ -153,12 +153,19 @@ const getDashboardStats = async (req, res) => {
       return '+0%';
     };
 
-    // Get recent transactions for the table
+    // Get recent transactions for the table (last 10 for display)
     const recentTransactions = await Transaction.find()
       .populate('productId', 'name')
       .populate('userId', 'name')
       .sort({ timestamp: -1 })
       .limit(10);
+    
+    // Get all transactions for charts (last 100 for better time-based filtering)
+    const allTransactionsForCharts = await Transaction.find()
+      .populate('productId', 'name')
+      .populate('userId', 'name')
+      .sort({ timestamp: -1 })
+      .limit(100);
     
     // Get all products for charts
     const allProducts = await Product.find().sort({ name: 1 });
@@ -205,6 +212,7 @@ const getDashboardStats = async (req, res) => {
         })()
       },
       recentTransactions,
+      allTransactionsForCharts,
       allProducts
     };
     
