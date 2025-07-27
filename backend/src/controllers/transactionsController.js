@@ -52,7 +52,9 @@ exports.createTransaction = async (req, res) => {
       type,
       quantity,
       userId,
-      remarks
+      remarks,
+      productName: product.name, // Store the product name directly
+      productCategory: product.category // Store the category too
     });
 
     await transaction.save();

@@ -97,7 +97,9 @@ exports.createProduct = async (req, res) => {
         type: 'add',
         quantity: parseInt(quantity),
         userId: req.user.id,
-        remarks: `Initial stock addition for new product: ${product.name}`
+        remarks: `Initial stock addition for new product: ${product.name}`,
+        productName: product.name, // Store the product name directly
+        productCategory: product.category // Store the category too
       });
       await transaction.save();
       
@@ -220,7 +222,9 @@ exports.updateProduct = async (req, res) => {
       type: 'update',
       quantity: parseInt(quantity), // Use the new quantity as the update quantity
       userId: req.user.id,
-      remarks: `Product update: ${product.name} - Quantity updated from ${oldQuantity} to ${quantity}`
+      remarks: `Product update: ${product.name} - Quantity updated from ${oldQuantity} to ${quantity}`,
+      productName: product.name, // Store the product name directly
+      productCategory: product.category // Store the category too
     });
     await transaction.save();
     
@@ -353,7 +357,9 @@ exports.importProducts = async (req, res) => {
           type: 'add',
           quantity: quantity,
           userId: req.user.id,
-          remarks: `Bulk import: Added ${quantity} units to existing product ${existing.name}`
+          remarks: `Bulk import: Added ${quantity} units to existing product ${existing.name}`,
+          productName: existing.name, // Store the product name directly
+          productCategory: existing.category // Store the category too
         });
         await transaction.save();
         updated++;
@@ -368,7 +374,9 @@ exports.importProducts = async (req, res) => {
           type: 'add',
           quantity: quantity,
           userId: req.user.id,
-          remarks: `Bulk import: Initial stock for new product ${newProduct.name}`
+          remarks: `Bulk import: Initial stock for new product ${newProduct.name}`,
+          productName: newProduct.name, // Store the product name directly
+          productCategory: newProduct.category // Store the category too
         });
         await transaction.save();
         added++;
