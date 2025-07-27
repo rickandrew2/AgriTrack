@@ -214,18 +214,15 @@ exports.updateProduct = async (req, res) => {
     console.log('Product updated successfully:', product);
     
     // Create a transaction record for the product update
-    // Only create transaction if quantity actually changed
-    if (quantityChange !== 0) {
-      const transactionType = quantityChange > 0 ? 'add' : 'update';
-      const transaction = new Transaction({
-        productId: product._id,
-        type: transactionType,
-        quantity: Math.abs(quantityChange),
-        userId: req.user.id,
-        remarks: `Product update: ${product.name} - Quantity changed from ${oldQuantity} to ${quantity}`
-      });
-      await transaction.save();
-    }
+    // Always create an update transaction when a product is modified
+    const transaction = new Transaction({
+      productId: product._id,
+      type: 'update',
+      quantity: parseInt(quantity), // Use the new quantity as the update quantity
+      userId: req.user.id,
+      remarks: `Product update: ${product.name} - Quantity updated from ${oldQuantity} to ${quantity}`
+    });
+    await transaction.save();
     
     // Log the activity
     await logProductActivity(
