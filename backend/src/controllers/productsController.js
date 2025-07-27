@@ -1,4 +1,5 @@
 const Product = require('../models/products');
+const Transaction = require('../models/transactions');
 const cloudinary = require('../config/cloudinary');
 const fs = require('fs');
 const XLSX = require('xlsx');
@@ -90,6 +91,16 @@ exports.createProduct = async (req, res) => {
 
       await product.save();
       
+      // Create a transaction record for the new product
+      const transaction = new Transaction({
+        productId: product._id,
+        type: 'add',
+        quantity: parseInt(quantity),
+        userId: req.user.id,
+        remarks: `Initial stock addition for new product: ${product.name}`
+      });
+      await transaction.save();
+      
       // Log the activity
       await logProductActivity(
         req.user,
@@ -172,6 +183,16 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
+    // Get the current product to compare quantities
+    const currentProduct = await Product.findById(req.params.id);
+    if (!currentProduct) {
+      console.log('Product not found with ID:', req.params.id);
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const oldQuantity = currentProduct.quantity;
+    const quantityChange = parseInt(quantity) - oldQuantity;
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       {
@@ -191,6 +212,20 @@ exports.updateProduct = async (req, res) => {
     }
 
     console.log('Product updated successfully:', product);
+    
+    // Create a transaction record for the product update
+    // Only create transaction if quantity actually changed
+    if (quantityChange !== 0) {
+      const transactionType = quantityChange > 0 ? 'add' : 'update';
+      const transaction = new Transaction({
+        productId: product._id,
+        type: transactionType,
+        quantity: Math.abs(quantityChange),
+        userId: req.user.id,
+        remarks: `Product update: ${product.name} - Quantity changed from ${oldQuantity} to ${quantity}`
+      });
+      await transaction.save();
+    }
     
     // Log the activity
     await logProductActivity(
@@ -219,12 +254,26 @@ exports.deleteProduct = async (req, res) => {
       return res.status(400).json({ error: 'Product ID is required' });
     }
 
-    const product = await Product.findByIdAndDelete(req.params.id);
+    // Get the product before deleting to record its details
+    const product = await Product.findById(req.params.id);
     
     if (!product) {
       console.log('Product not found with ID:', req.params.id);
       return res.status(404).json({ error: 'Product not found' });
     }
+
+    // Create a transaction record for the product deletion
+    const transaction = new Transaction({
+      productId: product._id,
+      type: 'dispatch', // Using dispatch type to represent removal
+      quantity: product.quantity,
+      userId: req.user.id,
+      remarks: `Product deletion: ${product.name} - Removed ${product.quantity} units from inventory`
+    });
+    await transaction.save();
+
+    // Now delete the product
+    await Product.findByIdAndDelete(req.params.id);
 
     console.log('Product deleted successfully:', product);
     
@@ -292,16 +341,37 @@ exports.importProducts = async (req, res) => {
       const existing = await Product.findOne({ name });
       if (existing) {
         // Update existing product
+        const oldQuantity = existing.quantity;
         existing.quantity += quantity;
         existing.category = category; // Update category
         existing.storageArea = storageArea; // Update storage area
         if (imageUrl) existing.imageUrl = imageUrl;
         await existing.save();
+        
+        // Create transaction for the quantity addition
+        const transaction = new Transaction({
+          productId: existing._id,
+          type: 'add',
+          quantity: quantity,
+          userId: req.user.id,
+          remarks: `Bulk import: Added ${quantity} units to existing product ${existing.name}`
+        });
+        await transaction.save();
         updated++;
       } else {
         // Create new product
         const newProduct = new Product({ name, category, quantity, storageArea, imageUrl });
         await newProduct.save();
+        
+        // Create transaction for the new product
+        const transaction = new Transaction({
+          productId: newProduct._id,
+          type: 'add',
+          quantity: quantity,
+          userId: req.user.id,
+          remarks: `Bulk import: Initial stock for new product ${newProduct.name}`
+        });
+        await transaction.save();
         added++;
       }
     }
