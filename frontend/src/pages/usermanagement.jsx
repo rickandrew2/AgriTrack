@@ -263,79 +263,90 @@ const UserManagement = () => {
       </div>
       {success && <div className="text-green-700 bg-green-100 border border-green-300 px-4 py-2 rounded mb-4">{success}</div>}
       {error && <div className="text-red-600 mb-4">{error}</div>}
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <table className="min-w-full bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg">
-          <thead>
-            <tr className="bg-gradient-to-r from-green-600 to-green-700 text-white">
-              <th className="py-4 px-6 text-left font-semibold text-lg">Name</th>
-              <th className="py-4 px-6 text-left font-semibold text-lg">Email</th>
-              <th className="py-4 px-6 text-left font-semibold text-lg">Role</th>
-              <th className="py-4 px-6 text-left font-semibold text-lg">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user._id || user.id} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-200">
-                <td className="py-4 px-6 font-medium text-gray-800">{user.name}</td>
-                <td className="py-4 px-6 text-gray-600">{user.email}</td>
-                <td className="py-4 px-6">
-                  <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                    user.role.toLowerCase() === 'admin' 
-                      ? 'bg-purple-100 text-purple-800' 
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase()}
-                  </span>
-                </td>
-                <td className="py-2 px-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-medium text-sm"
-                      onClick={() => handleEdit(user)}
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                      Edit
-                    </button>
-                    <button
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 font-medium text-sm"
-                      onClick={() => handleDeleteClick(user)}
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      {/* Users Table */}
+      <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/50">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8">
+            <p className="text-red-600 font-medium">Error: {error}</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-lg">
+              <thead className="bg-green-800 text-white">
+                <tr>
+                  <th className="px-6 py-4 text-left font-semibold">Name</th>
+                  <th className="px-6 py-4 text-left font-semibold">Email</th>
+                  <th className="px-6 py-4 text-left font-semibold">Role</th>
+                  <th className="px-6 py-4 text-left font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user, index) => (
+                  <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="px-6 py-4 text-gray-800 font-medium">{user.name}</td>
+                    <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        user.role.toLowerCase() === 'admin' 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit user"
+                        >
+                          <PencilIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(user)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete user"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Modal for Add/Edit User */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200">
-            <h3 className="text-2xl font-bold text-green-800 mb-6 flex items-center gap-2">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm p-4">
+          <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto border border-gray-200 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl sm:text-2xl font-bold text-green-800 mb-4 sm:mb-6 flex items-center gap-2">
               {editingUser ? (
                 <>
-                  <PencilIcon className="w-6 h-6" />
+                  <PencilIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                   Edit User
                 </>
               ) : (
                 <>
-                  <UserPlusIcon className="w-6 h-6" />
+                  <UserPlusIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                   Add User
                 </>
               )}
             </h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Full Name</label>
                 <input
                   type="text"
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white ${
+                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white ${
                     validationErrors.name ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
                   }`}
                   value={form.name}
@@ -352,10 +363,10 @@ const UserManagement = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Email Address</label>
                 <input
                   type="email"
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white ${
+                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white ${
                     validationErrors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
                   }`}
                   value={form.email}
@@ -372,9 +383,9 @@ const UserManagement = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Role</label>
                 <select
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white"
                   value={form.role}
                   onChange={(e) => handleFormChange('role', e.target.value)}
                 >
@@ -384,10 +395,10 @@ const UserManagement = () => {
               </div>
               {!editingUser && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1 sm:mb-2">Password</label>
                   <input
                     type="password"
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white ${
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white ${
                       validationErrors.password ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
                     }`}
                     value={form.password}
@@ -404,10 +415,10 @@ const UserManagement = () => {
                   )}
                 </div>
               )}
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
                 <button
                   type="button"
-                  className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium"
                   onClick={() => {
                     setShowModal(false);
                     setValidationErrors({});
@@ -418,7 +429,7 @@ const UserManagement = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all duration-200 font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all duration-200 font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={loading}
                 >
                   {loading ? (

@@ -143,22 +143,22 @@ const Layout = ({ onLogout }) => {
 
       {/* Main Content */}
       <div className="flex-1 bg-gradient-to-br from-green-50 to-emerald-50 overflow-y-auto">
-        <div className="p-8">
+        <div className="p-4 md:p-6 lg:p-8">
           {/* Top Bar */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-start mb-6 lg:mb-8">
             <div></div> {/* Empty div for spacing */}
             
             {/* Profile Section */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 lg:space-x-3">
               {/* Admin Button - Only show for admin users */}
               {userRole === 'admin' && (
                 <div className="flex flex-col items-center">
-                  <button className="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full shadow-lg flex items-center justify-center transition-colors duration-200">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button className="w-10 h-10 lg:w-12 lg:h-12 bg-green-500 hover:bg-green-600 rounded-full shadow-lg flex items-center justify-center transition-colors duration-200">
+                    <svg className="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </button>
-                  <span className="text-xs text-gray-600 mt-1 font-medium">ADMIN</span>
+                  <span className="text-xs text-gray-600 mt-1 font-medium hidden lg:block">ADMIN</span>
                 </div>
               )}
               
@@ -166,13 +166,13 @@ const Layout = ({ onLogout }) => {
               <div className="flex flex-col items-center">
                 <button
                   onClick={handleLogoutClick}
-                  className="w-12 h-12 bg-red-500 hover:bg-red-600 rounded-full shadow-lg flex items-center justify-center transition-colors duration-200"
+                  className="w-10 h-10 lg:w-12 lg:h-12 bg-red-500 hover:bg-red-600 rounded-full shadow-lg flex items-center justify-center transition-colors duration-200"
                 >
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
                 </button>
-                <span className="text-xs text-gray-600 mt-1 font-medium">LOGOUT</span>
+                <span className="text-xs text-gray-600 mt-1 font-medium hidden lg:block">LOGOUT</span>
               </div>
             </div>
           </div>
@@ -184,40 +184,40 @@ const Layout = ({ onLogout }) => {
 
       {/* Custom Logout Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm sm:max-w-md w-full mx-auto transform transition-all duration-300 scale-100">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-t-2xl p-6">
+            <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-t-2xl p-4 sm:p-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-500 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Confirm Logout</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-white">Confirm Logout</h3>
                   <p className="text-green-100 text-sm">Are you sure you want to logout?</p>
                 </div>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6">
-              <p className="text-gray-600 mb-6">
+            <div className="p-4 sm:p-6">
+              <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
                 You will be logged out of your account and redirected to the login page. Any unsaved changes will be lost.
               </p>
               
               {/* Modal Actions */}
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                 <button
                   onClick={handleCancelLogout}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-xl transition-colors duration-200"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 sm:py-3 px-4 rounded-xl transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200"
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 sm:py-3 px-4 rounded-xl transition-colors duration-200"
                 >
                   Logout
                 </button>

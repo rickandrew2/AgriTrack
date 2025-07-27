@@ -705,13 +705,15 @@ const Products = () => {
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Table Header */}
         <div className="bg-green-800 text-white px-6 py-4">
-          <div className="grid grid-cols-6 gap-4 font-semibold text-base">
-            <div>IMAGE</div>
-            <div>Name</div>
-            <div>Quantity Available</div>
-            <div>Category</div>
-            <div>Storage Area</div>
-            <div>Actions</div>
+          <div className="overflow-x-auto">
+            <div className="grid grid-cols-6 gap-4 font-semibold text-base min-w-[800px]">
+              <div>IMAGE</div>
+              <div>Name</div>
+              <div>Quantity Available</div>
+              <div>Category</div>
+              <div>Storage Area</div>
+              <div>Actions</div>
+            </div>
           </div>
         </div>
         {/* Table Body */}
@@ -725,43 +727,45 @@ const Products = () => {
               <p className="text-red-600 font-medium">Error: {error}</p>
             </div>
           ) : paginatedProducts.length > 0 ? (
-            paginatedProducts.map((product, index) => (
-              <div key={index} className="px-6 py-4 hover:bg-gray-100">
-                <div className="grid grid-cols-6 gap-4 items-center">
-                  <div>
-                    <img
-                      src={product.imageUrl || DEFAULT_IMAGE}
-                      alt={product.name}
-                      className="w-12 h-12 object-cover rounded-lg border border-gray-200 bg-white"
-                    />
-                  </div>
-                  <div className="font-medium text-gray-800">{product.name}</div>
-                  <div className="text-gray-800">{product.quantity || product.stock || 0}</div>
-                  <div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${CATEGORY_COLORS[product.category] || CATEGORY_COLORS.Other}`}>
-                      {product.category}
-                    </span>
-                  </div>
-                  <div className="text-gray-600">{product.storageArea || 'N/A'}</div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleEdit(product)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit product"
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete product"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+            <div className="overflow-x-auto">
+              {paginatedProducts.map((product, index) => (
+                <div key={index} className="px-6 py-4 hover:bg-gray-100">
+                  <div className="grid grid-cols-6 gap-4 items-center min-w-[800px]">
+                    <div>
+                      <img
+                        src={product.imageUrl || DEFAULT_IMAGE}
+                        alt={product.name}
+                        className="w-12 h-12 object-cover rounded-lg border border-gray-200 bg-white"
+                      />
+                    </div>
+                    <div className="font-medium text-gray-800">{product.name}</div>
+                    <div className="text-gray-800">{product.quantity || product.stock || 0}</div>
+                    <div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${CATEGORY_COLORS[product.category] || CATEGORY_COLORS.Other}`}>
+                        {product.category}
+                      </span>
+                    </div>
+                    <div className="text-gray-600">{product.storageArea || 'N/A'}</div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleEdit(product)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit product"
+                      >
+                        <PencilIcon className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete product"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
             <div className="px-6 py-8 text-center text-gray-500">
               No products found
@@ -801,23 +805,23 @@ const Products = () => {
 
       {/* Dispatch Modal */}
       {showDispatchModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-green-800">Dispatch Product</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md lg:max-w-lg w-full mx-auto max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-green-800">Dispatch Product</h2>
               <button
                 onClick={() => setShowDispatchModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 p-1"
               >
-                <XMarkIcon className="w-6 h-6" />
+                <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
             
             <form onSubmit={handleDispatch}>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Product Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Select Product
                   </label>
                   <select
@@ -840,7 +844,7 @@ const Products = () => {
 
                 {/* Quantity */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Dispatch Quantity
                   </label>
                   <input
@@ -862,7 +866,7 @@ const Products = () => {
 
                 {/* Remarks */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Remarks (Optional)
                   </label>
                   <textarea
@@ -875,7 +879,7 @@ const Products = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                   <button
                     type="button"
                     onClick={() => setShowDispatchModal(false)}
@@ -899,23 +903,23 @@ const Products = () => {
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-green-800">Edit Product</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md lg:max-w-lg w-full mx-auto max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-green-800">Edit Product</h2>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 p-1"
               >
-                <XMarkIcon className="w-6 h-6" />
+                <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
             
             <form onSubmit={handleEditSubmit}>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Product Name
                   </label>
                   <input
@@ -929,7 +933,7 @@ const Products = () => {
 
                 {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Category
                   </label>
                   <select
@@ -947,7 +951,7 @@ const Products = () => {
 
                 {/* Quantity */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Quantity
                   </label>
                   <input
@@ -962,7 +966,7 @@ const Products = () => {
 
                 {/* Storage Area */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Storage Area
                   </label>
                   <input
@@ -976,7 +980,7 @@ const Products = () => {
 
                 {/* Image Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Product Image (Optional)
                   </label>
                   {editFormData.imageUrl && (
@@ -985,7 +989,7 @@ const Products = () => {
                       <img
                         src={editFormData.imageUrl}
                         alt="Current"
-                        className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-200"
                       />
                     </div>
                   )}
@@ -1001,14 +1005,14 @@ const Products = () => {
                       <img
                         src={imagePreview}
                         alt="Preview"
-                        className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-200"
                       />
                     </div>
                   )}
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                   <button
                     type="button"
                     onClick={() => setShowEditModal(false)}
@@ -1064,23 +1068,23 @@ const Products = () => {
 
       {/* Add Product Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-green-800">Add New Product</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md lg:max-w-lg w-full mx-auto max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-green-800">Add New Product</h2>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 p-1"
               >
-                <XMarkIcon className="w-6 h-6" />
+                <XMarkIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
             
             <form onSubmit={handleAddProduct}>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Product Name
                   </label>
                   <input
@@ -1094,7 +1098,7 @@ const Products = () => {
 
                 {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Category
                   </label>
                   <select
@@ -1112,7 +1116,7 @@ const Products = () => {
 
                 {/* Quantity */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Quantity
                   </label>
                   <input
@@ -1127,7 +1131,7 @@ const Products = () => {
 
                 {/* Storage Area */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Storage Area
                   </label>
                   <input
@@ -1141,7 +1145,7 @@ const Products = () => {
 
                 {/* Image Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Product Image (Optional)
                   </label>
                   <input
@@ -1155,14 +1159,14 @@ const Products = () => {
                       <img
                         src={imagePreview}
                         alt="Preview"
-                        className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-200"
                       />
                     </div>
                   )}
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}

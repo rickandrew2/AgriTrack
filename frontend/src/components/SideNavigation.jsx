@@ -29,10 +29,10 @@ const SideNavigation = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <div className="w-64 min-h-screen flex flex-col justify-between bg-green-700/100 backdrop-blur-xl shadow-2xl rounded-r-3xl border-r border-green-300/30">
+    <div className="w-64 lg:w-64 md:w-56 min-h-screen flex flex-col justify-between bg-green-700/100 backdrop-blur-xl shadow-2xl rounded-r-3xl border-r border-green-300/30">
       <div>
         <div className="flex flex-col items-center pt-8 pb-2">
-          <h1 className="text-white text-2xl font-extrabold tracking-widest drop-shadow-lg text-center">ADMIN</h1>
+          <h1 className="text-white text-xl lg:text-2xl font-extrabold tracking-widest drop-shadow-lg text-center">ADMIN</h1>
         </div>
         <nav className="mt-8 flex flex-col gap-2">
           {navigationItems.map((item) => {
@@ -42,7 +42,7 @@ const SideNavigation = ({ activeTab, onTabChange }) => {
               <button
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
-                className={`w-full flex items-center px-8 py-4 text-left rounded-l-full transition-all duration-300 group relative overflow-hidden
+                className={`w-full flex items-center px-4 lg:px-8 py-4 text-left rounded-l-full transition-all duration-300 group relative overflow-hidden
                   ${isActive
                     ? 'bg-green-100/80 text-green-900 shadow-lg border-l-4 border-green-400 scale-[1.03]'
                     : 'text-green-100 hover:bg-green-700/60 hover:scale-105 hover:text-green-50'}
@@ -50,15 +50,15 @@ const SideNavigation = ({ activeTab, onTabChange }) => {
                 style={{ boxShadow: isActive ? '0 4px 24px 0 rgba(34,197,94,0.15)' : undefined }}
               >
                 <span className={`absolute left-0 top-0 h-full w-1 bg-green-400 rounded-r-full transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`}></span>
-                <Icon className={`w-6 h-6 mr-4 group-hover:scale-110 transition-transform duration-200 ${isActive ? 'text-green-600' : ''}`} />
-                <span className={`font-semibold tracking-wide text-base ${isActive ? 'font-bold' : ''}`}>{item.name}</span>
+                <Icon className={`w-5 h-5 lg:w-6 lg:h-6 mr-3 lg:mr-4 group-hover:scale-110 transition-transform duration-200 ${isActive ? 'text-green-600' : ''}`} />
+                <span className={`font-semibold tracking-wide text-sm lg:text-base ${isActive ? 'font-bold' : ''} hidden md:block`}>{item.name}</span>
               </button>
             );
           })}
         </nav>
       </div>
       <div className="flex flex-col items-center pb-8 pt-4">
-        <img src={logo} alt="Logo" className="w-20 h-20 object-contain rounded-full shadow-lg border-4 border-green-200 bg-white p-2" />
+        <img src={logo} alt="Logo" className="w-16 h-16 lg:w-20 lg:h-20 object-contain rounded-full shadow-lg border-4 border-green-200 bg-white p-2" />
       </div>
     </div>
   );

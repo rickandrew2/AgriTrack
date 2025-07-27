@@ -1328,7 +1328,6 @@ const Reports = () => {
                     </>
                   )}
                 </button>
-                <button className="px-4 py-2 text-green-600 hover:text-green-800 font-medium">Export Excel</button>
               </div>
             </div>
             <div ref={reportRef}>
@@ -1522,6 +1521,19 @@ const Reports = () => {
                 {selectedReportData.type === 'inventory' ? 'Inventory Report' : 'Transaction Report'} - {new Date(selectedReportData.generatedAt).toLocaleString()}
               </h3>
               <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => {
+                    // Set the current report data for PDF generation
+                    setCurrentReportData(selectedReportData);
+                    setSelectedReport(selectedReportData.type);
+                    generatePDFPreview();
+                    closeReportModal();
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center space-x-2"
+                >
+                  <ArrowDownTrayIcon className="w-4 h-4" />
+                  <span>Download PDF</span>
+                </button>
                 <button
                   onClick={closeReportModal}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
