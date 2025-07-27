@@ -16,14 +16,19 @@ exports.getAllUsers = async (req, res) => {
 exports.register = async (req, res) => {
   try {
     console.log('Full request body:', req.body);
-    const { fullName, email, password } = req.body;
+    const { fullName, email, password, role } = req.body;
     
-    console.log('Registration attempt:', { fullName, email, password: password ? '***' : 'undefined' });
+    console.log('Registration attempt:', { fullName, email, role, password: password ? '***' : 'undefined' });
 
     // Validate required fields
     if (!fullName || !email || !password) {
       console.log('Missing required fields:', { fullName: !!fullName, email: !!email, password: !!password });
       return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Validate role if provided
+    if (role && !['staff', 'admin'].includes(role.toLowerCase())) {
+      return res.status(400).json({ error: 'Invalid role. Must be either "staff" or "admin"' });
     }
 
     // Check if user already exists by email
@@ -48,12 +53,15 @@ exports.register = async (req, res) => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create new user with automatic "staff" role
+    // Create new user with specified role or default to 'staff'
+    const userRole = role ? role.toLowerCase() : 'staff';
+    console.log('Creating user with role:', userRole);
+    
     const user = new User({
       name: fullName,
       email,
       passwordHash,
-      role: 'staff' // Automatically assign staff role
+      role: userRole
     });
 
     await user.save();

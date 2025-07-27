@@ -49,7 +49,12 @@ const UserManagement = () => {
 
   const handleEdit = (user) => {
     setEditingUser(user);
-    setForm({ name: user.name, email: user.email, role: user.role, password: '' });
+    setForm({ 
+      name: user.name, 
+      email: user.email, 
+      role: user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase(), 
+      password: '' 
+    });
     setValidationErrors({});
     setError('');
     setShowModal(true);
@@ -68,7 +73,7 @@ const UserManagement = () => {
     try {
       // You need to implement DELETE endpoint in backend for this to work
       const token = localStorage.getItem('token');
-      const response = await fetch(buildApiUrl(`/users/${userToDelete._id}`), {
+      const response = await fetch(buildApiUrl(`/users/${userToDelete._id || userToDelete.id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -79,7 +84,7 @@ const UserManagement = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to delete user');
       }
-      setUsers(users.filter((u) => u._id !== userToDelete._id));
+      setUsers(users.filter((u) => (u._id || u.id) !== (userToDelete._id || userToDelete.id)));
       setSuccess('User deleted successfully!');
       setTimeout(() => setSuccess(''), 3000);
       setShowDeleteModal(false);
@@ -193,7 +198,7 @@ const UserManagement = () => {
       let response, data;
       if (editingUser) {
         // Update existing user
-        response = await fetch(buildApiUrl(`/users/${editingUser._id}`), {
+        response = await fetch(buildApiUrl(`/users/${editingUser._id || editingUser.id}`), {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -210,7 +215,7 @@ const UserManagement = () => {
           throw new Error(errorData.error || 'Failed to update user');
         }
         data = await response.json();
-        setUsers(users.map((u) => (u._id === editingUser._id ? data.user : u)));
+        setUsers(users.map((u) => ((u._id || u.id) === (editingUser._id || editingUser.id) ? { ...data.user, _id: data.user.id } : u)));
         setSuccess('User updated successfully!');
         setTimeout(() => setSuccess(''), 3000);
       } else {
@@ -232,7 +237,7 @@ const UserManagement = () => {
           throw new Error(errorData.error || 'Failed to add user');
         }
         data = await response.json();
-        setUsers([...users, data.user]);
+        setUsers([...users, { ...data.user, _id: data.user.id }]);
         setSuccess('User added successfully!');
         setTimeout(() => setSuccess(''), 3000);
       }
@@ -272,16 +277,16 @@ const UserManagement = () => {
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user._id} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-200">
+              <tr key={user._id || user.id} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-200">
                 <td className="py-4 px-6 font-medium text-gray-800">{user.name}</td>
                 <td className="py-4 px-6 text-gray-600">{user.email}</td>
                 <td className="py-4 px-6">
                   <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                    user.role === 'Admin' 
+                    user.role.toLowerCase() === 'admin' 
                       ? 'bg-purple-100 text-purple-800' 
                       : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {user.role}
+                    {user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase()}
                   </span>
                 </td>
                 <td className="py-2 px-4">

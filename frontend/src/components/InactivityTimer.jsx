@@ -70,7 +70,7 @@ const InactivityTimer = () => {
   };
 
   return (
-    <div className={`fixed top-4 right-4 rounded-lg shadow-lg border p-3 z-50 ${getBackgroundColor()}`}>
+    <div className={`fixed top-4 right-32 rounded-lg shadow-lg border p-3 z-50 ${getBackgroundColor()}`}>
       <div className="flex items-center space-x-2">
         <div className={`w-3 h-3 rounded-full ${timeLeft <= 300 ? 'bg-red-500' : 'bg-orange-500'} animate-pulse`}></div>
         <span className={`text-sm font-semibold ${getWarningColor()}`}>

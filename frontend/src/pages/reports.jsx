@@ -302,15 +302,15 @@ const Reports = () => {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
+      const margin = 35; // Increased from 20 to 35 for better spacing
       const contentWidth = pageWidth - (2 * margin);
-      let yPosition = 30;
+      let yPosition = 40; // Increased from 30 to 40 for better top spacing
 
       // Helper function to check if we need a new page
       const checkPageBreak = (requiredSpace = 20) => {
-        if (yPosition + requiredSpace > pageHeight - 40) {
+        if (yPosition + requiredSpace > pageHeight - 50) { // Increased bottom margin from 40 to 50
           pdf.addPage();
-          yPosition = 30;
+          yPosition = 40; // Updated to match new starting position
           return true;
         }
         return false;
