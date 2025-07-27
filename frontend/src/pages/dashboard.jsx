@@ -246,7 +246,7 @@ const Dashboard = () => {
                 {dashboardStats.recentTransactions.map((transaction, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 text-gray-800">
-                      {transaction.productId?.name || transaction.productName || 'Unknown Product'}
+                      {transaction.productId?.name || transaction.productName || 'Deleted Product'}
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${

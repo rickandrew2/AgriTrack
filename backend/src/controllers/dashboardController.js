@@ -179,6 +179,24 @@ const getDashboardStats = async (req, res) => {
       .sort({ timestamp: -1 })
       .limit(100);
     
+    // Process transactions to handle deleted products
+    const processTransactions = (transactions) => {
+      return transactions.map(transaction => {
+        // If productId is null (deleted product) but we have productName, use that
+        if (!transaction.productId && transaction.productName) {
+          return {
+            ...transaction.toObject(),
+            productId: { name: transaction.productName }
+          };
+        }
+        return transaction;
+      });
+    };
+    
+    // Apply processing to both transaction arrays
+    const processedRecentTransactions = processTransactions(recentTransactions);
+    const processedAllTransactionsForCharts = processTransactions(allTransactionsForCharts);
+    
     // Get all products for charts
     const allProducts = await Product.find().sort({ name: 1 });
     console.log('Backend - allProducts count:', allProducts.length);
@@ -223,8 +241,8 @@ const getDashboardStats = async (req, res) => {
           }
         })()
       },
-      recentTransactions,
-      allTransactionsForCharts,
+      recentTransactions: processedRecentTransactions,
+      allTransactionsForCharts: processedAllTransactionsForCharts,
       allProducts
     };
     
