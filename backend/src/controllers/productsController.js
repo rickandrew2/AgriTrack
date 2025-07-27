@@ -262,10 +262,10 @@ exports.deleteProduct = async (req, res) => {
     // Create a transaction record for the product deletion
     const transaction = new Transaction({
       productId: product._id,
-      type: 'dispatch', // Using dispatch type to represent removal
+      type: 'delete', // Using delete type for complete product removal
       quantity: product.quantity,
       userId: req.user.id,
-      remarks: `Product deletion: ${product.name} - Removed ${product.quantity} units from inventory`
+      remarks: `Product deletion: ${product.name} - Completely removed ${product.quantity} units from inventory`
     });
     await transaction.save();
 

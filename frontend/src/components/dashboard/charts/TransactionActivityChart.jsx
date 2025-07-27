@@ -34,7 +34,8 @@ const TransactionActivityChart = ({ dashboardStats }) => {
     const activity = {
       'Add': 0,
       'Dispatch': 0,
-      'Update': 0
+      'Update': 0,
+      'Delete': 0
     };
     
     transactions.forEach(transaction => {

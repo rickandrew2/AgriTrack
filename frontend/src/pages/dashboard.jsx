@@ -252,6 +252,7 @@ const Dashboard = () => {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         transaction.type === 'dispatch' ? 'bg-red-100 text-red-800' :
                         transaction.type === 'add' ? 'bg-green-100 text-green-800' :
+                        transaction.type === 'delete' ? 'bg-gray-100 text-gray-800' :
                         'bg-blue-100 text-blue-800'
                       }`}>
                         {transaction.type.toUpperCase()}

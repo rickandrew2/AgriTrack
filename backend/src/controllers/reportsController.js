@@ -156,11 +156,13 @@ exports.generateTransactionReport = async (req, res) => {
     const dispatchTransactions = validTransactions.filter(t => t.type === 'dispatch');
     const addTransactions = validTransactions.filter(t => t.type === 'add');
     const updateTransactions = validTransactions.filter(t => t.type === 'update');
+    const deleteTransactions = validTransactions.filter(t => t.type === 'delete');
 
     // Calculate quantities by type
     const totalDispatchQuantity = dispatchTransactions.reduce((sum, t) => sum + t.quantity, 0);
     const totalAddQuantity = addTransactions.reduce((sum, t) => sum + t.quantity, 0);
     const totalUpdateQuantity = updateTransactions.reduce((sum, t) => sum + t.quantity, 0);
+    const totalDeleteQuantity = deleteTransactions.reduce((sum, t) => sum + t.quantity, 0);
 
     // Group by date (daily)
     const dailyStats = {};
@@ -280,9 +282,11 @@ exports.generateTransactionReport = async (req, res) => {
         dispatchCount: dispatchTransactions.length,
         addCount: addTransactions.length,
         updateCount: updateTransactions.length,
+        deleteCount: deleteTransactions.length,
         totalDispatchQuantity,
         totalAddQuantity,
         totalUpdateQuantity,
+        totalDeleteQuantity,
         uniqueUsers: Object.keys(userStats).length,
         uniqueProducts: Object.keys(productStats).length
       },
@@ -326,7 +330,7 @@ exports.getReportFilterOptions = async (req, res) => {
       storageAreas,
       users,
       products,
-      transactionTypes: ['dispatch', 'add', 'update']
+      transactionTypes: ['dispatch', 'add', 'update', 'delete']
     });
   } catch (err) {
     console.error('Error getting filter options:', err);

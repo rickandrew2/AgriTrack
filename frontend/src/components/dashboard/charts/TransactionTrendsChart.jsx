@@ -14,7 +14,7 @@ const TransactionTrendsChart = ({ dashboardStats }) => {
       const type = transaction.type;
       
       if (!trendsByDate[date]) {
-        trendsByDate[date] = { date, Add: 0, Dispatch: 0, Update: 0 };
+        trendsByDate[date] = { date, Add: 0, Dispatch: 0, Update: 0, Delete: 0 };
       }
       
       trendsByDate[date][type.charAt(0).toUpperCase() + type.slice(1)]++;

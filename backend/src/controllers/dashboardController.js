@@ -37,6 +37,18 @@ const getDashboardStats = async (req, res) => {
     ]);
     const totalAddedItems = addResult.length > 0 ? addResult[0].totalAddedItems : 0;
     
+    // Get total deleted items (sum of quantities from delete transactions)
+    const deleteResult = await Transaction.aggregate([
+      { $match: { type: 'delete' } },
+      {
+        $group: {
+          _id: null,
+          totalDeletedItems: { $sum: '$quantity' }
+        }
+      }
+    ]);
+    const totalDeletedItems = deleteResult.length > 0 ? deleteResult[0].totalDeletedItems : 0;
+    
     // Get remaining stock (sum of all product quantities)
     const remainingStockResult = await Product.aggregate([
       {
