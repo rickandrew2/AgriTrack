@@ -35,6 +35,15 @@ const indexRoutes = require('./routes/index');
 
 app.use('/api', indexRoutes);
 
+// Root endpoint for uptime monitoring
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'AgriTrack API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
