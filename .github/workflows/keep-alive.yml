@@ -1,0 +1,21 @@
+name: Keep Backend Alive
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Ping Backend
+      run: |
+        echo "Pinging backend at $(date)"
+        curl -f https://agritrack-backend-jmlf.onrender.com/health || echo "Backend ping failed"
+        
+    - name: Log Result
+      run: |
+        echo "Keep-alive ping completed at $(date)" 
